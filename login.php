@@ -84,7 +84,7 @@ if (isset($_POST['form_sent']) && $action == 'in')
 
 else if ($action == 'out')
 {
-	if ($pun_user['is_guest'] || !isset($_GET['id']) || $_GET['id'] != $pun_user['id'] || !isset($_GET['csrf_token']) || $_GET['csrf_token'] != sha1($pun_user['id'].sha1(get_remote_address())))
+	if ($pun_user['is_guest'] || !isset($_GET['id']) || $_GET['id'] != $pun_user['id'] || !isset($_GET['csrf_token']) || $_GET['csrf_token'] != pun_hash($pun_user['id'].pun_hash(get_remote_address())))
 	{
 		header('Location: index.php');
 		exit;
@@ -210,7 +210,7 @@ require PUN_ROOT.'header.php';
 							<input type="hidden" name="form_sent" value="1" />
 							<input type="hidden" name="redirect_url" value="<?php echo $redirect_url ?>" />
 							<label class="conl"><strong><?php echo $lang_common['Username'] ?></strong><br /><input type="text" name="req_username" size="25" maxlength="25" tabindex="1" /><br /></label>
-							<label class="conl"><strong><?php echo $lang_common['Password'] ?></strong><br /><input type="password" name="req_password" size="20" maxlength="32" tabindex="2" /><br /></label>
+							<label class="conl"><strong><?php echo $lang_common['Password'] ?></strong><br /><input type="password" name="req_password" size="16" maxlength="16" tabindex="2" /><br /></label>
 							<p class="clearb"><?php echo $lang_login['Login info'] ?></p>
 							<p><a href="register.php" tabindex="4"><?php echo $lang_login['Not registered'] ?></a>&nbsp;&nbsp;
 							<a href="login.php?action=forget" tabindex="5"><?php echo $lang_login['Forgotten pass'] ?></a></p>

@@ -36,7 +36,7 @@ $lang_common = array(
 'Bad request'			=>	'Bad request. The link you followed is incorrect or outdated.',
 'No view'				=>	'You do not have permission to view these forums.',
 'No permission'			=>	'You do not have permission to access this page.',
-'Bad referrer'			=>	'Bad HTTP_REFERER. You were referred to this page from an unauthorized source. If the problem persists please make sure that \'Base URL\' is correctly set in Admin/Options and that you are visiting the forum by navigating to that URL. More information regarding the referrer check can be found in the PunBB documentation.',
+'Bad referrer'			=>	'Bad HTTP_REFERER. You were referred to this page from an unauthorized source. If the problem persists please make sure that \'Base URL\' is correctly set in Admin/Options and that you are visiting the forum by navigating to that URL. More information regarding the referrer check can be found in the FluxBB documentation.',
 
 // Topic/forum indicators
 'New icon'				=>	'There are new posts',
@@ -121,7 +121,7 @@ $lang_common = array(
 'Profile'				=>	'Profile',
 'Logout'				=>	'Logout',
 'Logged in as'			=>	'Logged in as',
-'Admin'					=>	'Admin',
+'Admin'					=>	'Administration',
 'Last visit'			=>	'Last visit',
 'Show new posts'		=>	'Show new posts since last visit',
 'Mark all as read'		=>	'Mark all topics as read',

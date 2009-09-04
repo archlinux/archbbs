@@ -104,6 +104,11 @@ function check_cookie(&$pun_user)
 				$db->query('UPDATE '.$db->prefix.'online SET logged='.$now.$idle_sql.' WHERE user_id='.$pun_user['id']) or error('Unable to update online list', __FILE__, __LINE__, $db->error());
 			}
 		}
+		else
+		{
+			if (!$pun_user['logged'])
+				$pun_user['logged'] = $pun_user['last_visit'];
+		}
 
 		$pun_user['is_guest'] = false;
 	}
@@ -159,7 +164,7 @@ function set_default_user()
 
 
 //
-// Set a cookie, PunBB style!
+// Set a cookie, FluxBB style!
 //
 function pun_setcookie($user_id, $password_hash, $expire)
 {
@@ -295,14 +300,14 @@ function generate_navlinks()
 				$links[] = '<li id="navsearch"><a href="search.php">'.$lang_common['Search'].'</a>';
 
 			$links[] = '<li id="navprofile"><a href="profile.php?id='.$pun_user['id'].'">'.$lang_common['Profile'].'</a>';
-			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.sha1($pun_user['id'].sha1(get_remote_address())).'">'.$lang_common['Logout'].'</a>';
+			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.pun_hash($pun_user['id'].pun_hash(get_remote_address())).'">'.$lang_common['Logout'].'</a>';
 		}
 		else
 		{
 			$links[] = '<li id="navsearch"><a href="search.php">'.$lang_common['Search'].'</a>';
 			$links[] = '<li id="navprofile"><a href="profile.php?id='.$pun_user['id'].'">'.$lang_common['Profile'].'</a>';
 			$links[] = '<li id="navadmin"><a href="admin_index.php">'.$lang_common['Admin'].'</a>';
-			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.sha1($pun_user['id'].sha1(get_remote_address())).'">'.$lang_common['Logout'].'</a>';
+			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.pun_hash($pun_user['id'].pun_hash(get_remote_address())).'">'.$lang_common['Logout'].'</a>';
 		}
 	}
 
@@ -948,7 +953,7 @@ function error($message, $file, $line, $db_error = false)
 
 	// Set a default title if the script failed before $pun_config could be populated
 	if (empty($pun_config))
-		$pun_config['o_board_title'] = 'PunBB';
+		$pun_config['o_board_title'] = 'FluxBB';
 
 	// Empty output buffer and stop buffering
 	@ob_end_clean();
@@ -981,7 +986,7 @@ H2 {MARGIN: 0; COLOR: #FFFFFF; BACKGROUND-COLOR: #B84623; FONT-SIZE: 1.1em; PADD
 
 	if (defined('PUN_DEBUG'))
 	{
-		echo "\t\t".'<strong>File:</strong> '.$file.'<br />'."\n\t\t".'<strong>Line:</strong> '.$line.'<br /><br />'."\n\t\t".'<strong>PunBB reported</strong>: '.$message."\n";
+		echo "\t\t".'<strong>File:</strong> '.$file.'<br />'."\n\t\t".'<strong>Line:</strong> '.$line.'<br /><br />'."\n\t\t".'<strong>FluxBB reported</strong>: '.$message."\n";
 
 		if ($db_error)
 		{

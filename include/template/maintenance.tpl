@@ -10,17 +10,6 @@
 <div id="punwrap">
 <div id="punmaint" class="pun">
 
-<div id="main_nav">
-<ul>
-	<li><a href="http://www.archlinux.org/download/">Get Arch</a></li>
-	<li><a href="http://aur.archlinux.org">AUR</a></li>
-	<li><a href="http://bugs.archlinux.org">Bugs</a></li>
-	<li><a href="http://wiki.archlinux.org">Wiki</a></li>
-	<li class="selected"><a href="http://bbs.archlinux.org">Forums</a></li>
-	<li><a href="http://www.archlinux.org">Home</a></li>
-</ul>
-</div>
-
 <div class="block">
 	<h2><pun_maint_heading></h2>
 	<div class="box">

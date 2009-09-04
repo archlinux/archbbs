@@ -99,7 +99,7 @@ Rebuilding index &hellip; This might be a good time to put on some coffee :-)<br
 		$topics[] = $cur_topic[0];
 
 	$result = $db->query('SELECT topic_id, id, message FROM '.$db->prefix.'posts WHERE topic_id IN ('.implode(',', $topics).') ORDER BY topic_id') or error('Unable to fetch topic/post info', __FILE__, __LINE__, $db->error());
- 
+
 	$cur_topic = 0;
 	while ($cur_post = $db->fetch_row($result))
 	{
