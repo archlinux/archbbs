@@ -1,0 +1,402 @@
+/****************************************************************/
+/* 1. imported stylesheets */
+/****************************************************************/
+
+/* import the basic setup styles */
+@import url(imports/base.css);
+/* import the colour scheme */
+@import url(imports/Archer_cs.css);
+
+/****************************************************************/
+/* 2. text settings */
+/****************************************************************/
+
+/* 2.1 this sets the default font group */
+
+.pun, .pun input, .pun select, .pun textarea, .pun optgroup {
+	font-family: verdana, arial, helvetica, sans-serif
+}
+
+.pun {font-size: 11px; line-height: normal}
+
+/* iewin font size only - to allow iewin to zoom. do not remove comments \*/
+* html .pun {font-size: 68.75%}
+/* end ie win font size */
+
+/* set font size for tables because ie requires it */
+.pun table, .pun input, .pun select, .pun optgroup, .pun textarea, div.postmsg p.postedit {font-size: 1em}
+
+/* 2.2 set the font-size for preformatted text i.e in code boxes */
+
+.pun pre {font-family: monaco, "bitstream vera sans mono", "courier new", courier, monospace}
+
+/* 2.3 font size for headers */
+
+.pun h2, .pun h4 {font-size: 1em}
+.pun h3 {font-size: 1.1em}
+#brdtitle h1 {font-size: 1.4em}
+
+/* 2.4 larger text for particular items */
+div.postmsg p {line-height: 1.4}
+div.postleft dt {font-size: 1.1em}
+.pun pre {font-size: 1.2em}
+
+/* 2.5 bold text */
+
+div.postleft dt, div.postmsg h4, td.tcl h3, div.forminfo h3, p.postlink, div.linkst li,
+div.linksb li, div.postlinksb li, .blockmenu li, #brdtitle h1, .pun span.warntext, .pun p.warntext {font-weight: bold}
+
+/****************************************************************/
+/* 3. links */
+/****************************************************************/
+
+/* 3.1 remove underlining for main menu, post header links, post links and vertical menus */
+
+#brdmenu a:link, #brdmenu a:visited, .blockpost dt a:link, .blockpost dt a:visited, .blockpost h2 a:link,
+.blockpost h2 a:visited, .postlink a:link, .postlink a:visited, .postfootright a:link, .postfootright a:visited,
+.blockmenu a:link, .blockmenu a:visited {
+	text-decoration: none
+}
+
+/* 3.2 underline on hover for links in headers and main menu */
+
+#brdmenu a:hover, .blockpost h2 a:hover {text-decoration: underline}
+
+/****************************************************************/
+/* 4. border width and style */
+/****************************************************************/
+
+/* 4.1 by default borders are 1px solid */
+
+div.box, .pun td, .pun th, .pun blockquote, div.codebox, div.forminfo, div.blockpost label {
+	border-style: solid;
+	border-width: 1px
+}
+
+/* 4.2 special settings for the board header. */
+
+#brdheader div.box {border-top-width: 4px}
+
+/* 4.3 borders for table cells */
+
+.pun td, .pun th {
+	border-bottom: none;
+	border-right: none
+}
+
+.pun .tcl {border-left: none}
+
+/* 4.4 special setting for fieldsets to preserve ie defaults */
+
+div>fieldset {
+	border-style: solid;
+	border-width: 1px
+}
+
+/****************************************************************/
+/* 5. vertical and page spacing */
+/****************************************************************/
+
+/* 5.1 page margins */
+
+html, body {margin: 0; padding: 0}
+
+/* 5.2 creates vertical space between main board elements (margins) */
+
+div.blocktable, div.block, div.blockform, div.block2col, #postreview {margin-bottom: 12px}
+#punindex div.blocktable, div.blockpost {margin-bottom: 6px}
+div.block2col div.blockform, div.block2col div.block {margin-bottom: 0px}
+
+/* 5.3 remove space above breadcrumbs, postlinks and pagelinks with a negative top margin */
+
+div.linkst, div.linksb {margin-top: -12px}
+div.postlinksb {margin-top: -6px}
+
+/* 5.4 put a 12px gap above the board information box in index because the category tables only
+have a 6px space beneath them */
+
+#brdstats {margin-top: 12px}
+
+/****************************************************************/
+/* 6. spacing around content */
+/****************************************************************/
+
+/* 6.1 default padding for main items */
+
+div.block div.inbox, div.blockmenu div.inbox {padding: 3px 6px}
+.pun p, .pun ul, .pun dl, div.blockmenu li, .pun label, #announce div.inbox div {padding: 3px 0}
+.pun h2 {padding: 4px 6px}
+
+/* 6.2 special spacing for various elements */
+
+.pun h1 {padding: 3px 0px 0px 0}
+#brdtitle p {padding-top: 0px}
+div.linkst {padding: 8px 6px 3px 6px}
+div.linksb, div.postlinksb {padding: 3px 6px 8px 6px}
+#brdwelcome, #brdfooter dl a, div.blockmenu li, div.rbox input  {line-height: 1.4em}
+#viewprofile dt, #viewprofile dd {padding: 0 3px; line-height: 2em}
+
+/* 6.4 create some horizontal spacing for various elements */
+
+#brdmenu li, div.rbox input, div.blockform p input  {margin-right: 12px}
+
+/****************************************************************/
+/* 7. spacing for tables */
+/****************************************************************/
+
+.pun th, .pun td {padding: 4px 6px}
+.pun td p {padding: 5px 0 0 0}
+
+/****************************************************************/
+/* 8. spacing for posts */
+/****************************************************************/
+
+/* 8.1 padding around left and right columns in viewtopic */
+
+div.postleft dl, div.postright {padding: 6px}
+
+/* 8.2 extra spacing for poster contact details and avatar */
+
+dd.usercontacts, dd.postavatar {margin-top: 5px}
+dd.postavatar {margin-bottom: 5px}
+
+/* 8.3 extra top spacing for signatures and edited by */
+
+div.postsignature, div.postmsg p.postedit {padding-top: 15px}
+
+/* 8.4 spacing for code and quote boxes */
+
+div.postmsg h4 {margin-bottom: 10px}
+.pun blockquote, div.codebox {margin: 5px 15px 15px 15px; padding: 8px}
+
+/* 8.5 padding for the action links and online indicator in viewtopic */
+
+div.postfootleft p, div.postfootright ul, div.postfootright div {padding: 10px 6px 5px 6px}
+
+/* 8.6 this is the input on moderators multi-delete view */
+
+div.blockpost input, div.blockpost label {
+	padding: 3px;
+	display: inline
+}
+
+p.multidelete {
+	padding-top: 15px;
+	padding-bottom: 5px
+}
+
+/* 8.7 make sure paragraphs in posts don't get any padding */
+
+div.postmsg p {padding: 0}
+
+/****************************************************************/
+/* 9. special spacing for forms */
+/****************************************************************/
+
+/* 9.1 padding around fieldsets */
+
+div.blockform form, div.fakeform {padding: 20px 20px 15px 20px}
+div.inform {padding-bottom: 12px}
+
+/* 9.2 padding inside fieldsets */
+
+.pun fieldset {padding: 0px 12px 0px 12px}
+div.infldset {padding: 9px 0px 12px 0}
+.pun legend {padding: 0px 6px}
+
+/* 9.3 the information box at the top of the registration form and elsewhere */
+
+div.forminfo {
+	margin-bottom: 12px;
+	padding: 9px 10px
+}
+
+/* 9.4 bbcode help links in post forms */
+
+ul.bblinks li {padding-right: 20px}
+
+ul.bblinks {padding-bottom: 10px; padding-left: 4px}
+
+/* 9.5 horizontal positioning for the submit button on forms */
+
+div.blockform p input {margin-left: 12px}
+
+/****************************************************************/
+/* 10. post status indicators */
+/****************************************************************/
+
+/* 10.1 these are the post status indicators which appear at the left of some tables. 
+.inew = new posts, .iredirect = redirect forums, .iclosed = closed topics and
+.isticky = sticky topics. by default only .inew is different from the default.*/
+
+div.icon {
+	float: left;
+	margin-top: 0.1em;
+	margin-left: 0.2em;
+	display: block;
+	border-width: 0.6em 0.6em 0.6em 0.6em;
+	border-style: solid
+}
+
+div.searchposts div.icon {margin-left: 0}
+
+/* 10.2 class .tclcon is a div inside the first column of tables with post indicators. the
+margin creates space for the post status indicator */
+
+td div.tclcon {margin-left: 2.3em}
+
+
+
+
+/* custom stuff below */
+body
+{
+	background: url("../img/titlebar.png") repeat-x top left #fff;
+	min-width: 600px;
+	font-size: 14px;
+	font-family: "dejavu sans", "bitstream vera sans", "lucida grande", arial, sans-serif;
+}
+
+body.plain
+{
+	background-image: none;
+}
+
+#punwrap
+{
+	margin: 0px 25px;
+}
+
+#brdheader div.box
+{
+	border: none;
+	background: transparent url(../img/titlelogo.png) no-repeat scroll left 10px;
+    height: 220px;
+}
+
+#brdtitle
+{
+	border: 0px;
+	padding: 0px;
+}
+
+#brdtitle p, #brdtitle h1
+{
+	display: none;
+}
+
+#main_nav
+{
+	position: absolute;
+	top: 123px;
+	right: 30px;
+	width: 600px;
+	background: #333;
+}
+
+#brdmenu
+{
+	position: absolute;
+	top: 149px;
+	right: 30px;
+	width: 600px;
+	background: #1793d1;
+	padding: 0px;
+}
+
+#main_nav ul, #brdmenu ul
+{
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+#brdmenu ul
+{
+	float: right;
+}
+
+#main_nav ul li, #brdmenu ul li
+{
+	display: block;
+	float: right;
+	margin: 0 3px;
+	padding: 0;
+	text-align: center;
+	font-size: 13px;
+	line-height: 26px;
+	height: 26px;
+}
+
+#brdmenu ul li
+{
+	float: left;
+}
+
+#main_nav ul li.selected
+{
+	background: #1793d1;
+}
+
+#brdmenu ul li.selected
+{
+	background: #333;
+}
+
+#main_nav ul li a, #brdmenu ul li a
+{
+	display: block;
+	padding: 0 8px;
+	color: #fff;
+	font-weight: bold;
+	text-decoration: none;
+	font-family: "dejavu sans", "bitstream vera sans", "lucida grande", arial, sans-serif;
+}
+
+#main_nav ul li a:hover
+{
+	background: #1793d1;
+}
+
+#brdmenu ul li a:hover
+{
+	text-decoration: none;
+}
+
+#brdwelcome
+{
+	padding-top: 175px;
+}
+
+
+/* ie fix due to the ad. don't ask questions, move along. */
+div.linkst div.inbox
+{
+	width: 100%;
+}
+
+#punredirect div.block, #punmaint div.block
+{
+	margin-top: 190px;
+	margin-left: 20%;
+	margin-right: 20%;
+}
+
+#punredirect, #punmaint, #helpfile
+{
+	background: url("../img/titlelogo.png") no-repeat top left;
+	position: absolute;
+	top: 10px;
+	right: 25px;
+	left: 25px;
+}
+
+#helpfile
+{
+	padding-top: 180px;
+}
+
+div#idx1 div.tclcon p, div#idx2 div.tclcon p, div#idx3 div.tclcon p, div#idx4 div.tclcon p, div#idx5 div.tclcon p
+{
+	display: none;
+}
