@@ -85,14 +85,6 @@ else if (isset($_POST['form_sent']))
 	if ($db->num_rows($result))
 		message('A new user was registered with the same IP address as you within the last hour. To prevent registration flooding, at least an hour has to pass between registrations from the same IP. Sorry for the inconvenience.');
 
-	// Check that whatever is trying to register doesn't look like a bot
-	$as_one_val = strtolower(trim($_POST['as_one']));
-	$as_two_val = strtolower($_POST['as_two']);
-
-	if ($as_one_val != 'archlinux' || $as_two_val != 'no')
-	{
-		message('Bots are unwelcome here. The door is right over there, don\'t let it hit you on the way out.');
-	}
 
 	$username = pun_trim($_POST['req_username']);
 	$email1 = strtolower(trim($_POST['req_email1']));
@@ -407,27 +399,6 @@ require PUN_ROOT.'header.php';
 						<div class="rbox">
 							<label><input type="checkbox" name="save_pass" value="1" checked="checked" /><?php echo $lang_prof_reg['Save user/pass'] ?><br /></label>
 						</div>
-					</div>
-				</fieldset>
-			</div>
-			<div class="inform">
-				<fieldset>
-					<legend>Prove that you are human</legend>
-					<div class="infldset">
-						<label>
-							This is the Archlinux forum. For which Linux distribution is this forum?<br />
-							<input type="text" maxlength="50" size="50" name="as_one" />
-							<br />
-						</label>
-						<label>
-							Are you a bot?
-							<br />
-							<select name="as_two">
-								<option value="yes" selected="selected">yes</option>
-								<option value="no">no</option>
-							</select>
-							<br />
-						</label>
 					</div>
 				</fieldset>
 			</div>

@@ -93,7 +93,6 @@ function generate_config_cache()
 	fwrite($fh, '<?php'."\n\n".'define(\'PUN_CONFIG_LOADED\', 1);'."\n\n".'$pun_config = '.var_export($output, true).';'."\n\n".'?>');
 
 	fclose($fh);
-	apc_clear_cache();
 }
 
 
@@ -119,7 +118,6 @@ function generate_bans_cache()
 	fwrite($fh, '<?php'."\n\n".'define(\'PUN_BANS_LOADED\', 1);'."\n\n".'$pun_bans = '.var_export($output, true).';'."\n\n".'?>');
 
 	fclose($fh);
-	apc_clear_cache();
 }
 
 
@@ -145,7 +143,6 @@ function generate_ranks_cache()
 	fwrite($fh, '<?php'."\n\n".'define(\'PUN_RANKS_LOADED\', 1);'."\n\n".'$pun_ranks = '.var_export($output, true).';'."\n\n".'?>');
 
 	fclose($fh);
-	apc_clear_cache();
 }
 
 
@@ -204,6 +201,5 @@ function generate_quickjump_cache($group_id = false)
 		fwrite($fh, $output);
 
 		fclose($fh);
-		apc_clear_cache();
 	}
 }

@@ -16,6 +16,16 @@
 			<pun_title>
 			<pun_desc>
 		</div>
+		<div id="main_nav">
+		<ul>
+			<li><a href="http://www.archlinux.org/download/">Download</a></li>
+			<li><a href="http://aur.archlinux.org/">AUR</a></li>
+			<li><a href="http://bugs.archlinux.org/">Bugs</a></li>
+			<li><a href="http://wiki.archlinux.org/">Wiki</a></li>
+			<li class="selected"><a href="http://bbs.archlinux.org/">Forums</a></li>
+			<li><a href="http://www.archlinux.org/">Home</a></li>
+		</ul>
+		</div>
 		<pun_navlinks>
 		<pun_status>
 	</div>
@@ -29,6 +39,17 @@
 
 </div>
 </div>
+
+<script type="text/javascript">
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+    var pageTracker = _gat._getTracker("UA-3589020-1");
+    pageTracker._setDomainName("archlinux.org");
+    pageTracker._initData();
+    pageTracker._trackPageview();
+</script>
 
 </body>
 </html>
