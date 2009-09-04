@@ -1,0 +1,5 @@
+# UGH. Google's AdSense repeats searches, ugly
+#User-agent: Mediapartners-Google
+#Disallow: /search.php?
+User-agent: Mediapartners-Google*
+Disallow:

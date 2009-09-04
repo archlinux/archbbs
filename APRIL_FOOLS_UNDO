@@ -1,0 +1,6 @@
+#- move include/common.php.NORMAL to include/common.php
+#- chmod 755 lang/English
+#- chmod 000 lang/German
+#- check sql db for people that signed up today. change their langs to English
+#- possibly revert css change. possibly not. grep for april...
+- remove german flag in img/ directory
