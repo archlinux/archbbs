@@ -53,7 +53,7 @@ if (!defined('PUN'))
 error_reporting(E_ALL ^ E_NOTICE);
 
 // Turn off magic_quotes_runtime
-set_magic_quotes_runtime(0);
+#set_magic_quotes_runtime(0);
 
 
 // Load the functions script
