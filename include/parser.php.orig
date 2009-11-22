@@ -280,23 +280,6 @@ function handle_url_tag($url, $link = '')
 
 
 //
-//Turns a [wiki=pagename]link[/wiki] bbcode into <a href="http://wikibase/pagename">link</a>
-//
-function handle_wiki_tag($pagename, $link = '')
-{
-	global $pun_user;
-
-	$wikiurl = 'http://wiki.archlinux.org/index.php/';
-
-	$full_url = str_replace(' ', '_', $wikiurl.$pagename);
-
-	$link = ($link == '' || $link == $pagename) ? ((strlen($pagename) > 55) ? substr($pagename, 0 , 39).' &hellip; '.substr($pagename, -10) : $pagename) : stripslashes($link);
-
-	return '<a href="'.$full_url.'">'.$link.'</a>';
-}
-
-
-//
 // Turns an URL from the [img] tag into an <img> tag or a <a href...> tag
 //
 function handle_img_tag($url, $is_signature = false)
@@ -335,9 +318,7 @@ function do_bbcode($text)
 					 '#\[url=([^\[<]*?)\](.*?)\[/url\]#e',
 					 '#\[email\]([^\[<]*?)\[/email\]#',
 					 '#\[email=([^\[<]*?)\](.*?)\[/email\]#',
-					 '#\[color=([a-zA-Z]*|\#?[0-9a-fA-F]{6})](.*?)\[/color\]#s',
-					 '#\[wiki\]([^\[<]*?)\[/wiki\]#e',
-					 '#\[wiki=([^\[<]*?)\](.*?)\[/wiki\]#e');
+					 '#\[color=([a-zA-Z]*|\#?[0-9a-fA-F]{6})](.*?)\[/color\]#s');
 
 	$replace = array('<strong>$1</strong>',
 					 '<em>$1</em>',
@@ -346,9 +327,7 @@ function do_bbcode($text)
 					 'handle_url_tag(\'$1\', \'$2\')',
 					 '<a href="mailto:$1">$1</a>',
 					 '<a href="mailto:$1">$2</a>',
-					 '<span style="color: $1">$2</span>',
-					 'handle_wiki_tag(\'$1\')',
-					 'handle_wiki_tag(\'$1\', \'$2\')');
+					 '<span style="color: $1">$2</span>');
 
 	// This thing takes a while! :)
 	$text = preg_replace($pattern, $replace, $text);
