@@ -12,7 +12,6 @@
 
 <div id="brdheader" class="block">
 	<div class="box">
-		<a class="logo" href="http://www.archlinux.org/"><span class="logo">Arch Linux</span></a>
 		<div id="brdtitle" class="inbox">
 			<pun_title>
 			<pun_desc>

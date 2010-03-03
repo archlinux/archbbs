@@ -275,19 +275,6 @@ body.plain
 	height: 220px;
 }
 
-#brdheader a.logo
-{
-	background: transparent url(../img/titlelogo.png) no-repeat scroll left 10px;
-	display: block;
-	height: 110px;
-	width: 350px;
-}
-
-#brdheader span.logo
-{
-	display: none;
-}
-
 #brdtitle
 {
 	border: 0px;
