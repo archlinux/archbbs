@@ -37,8 +37,7 @@
 #brdtitle h1 {font-size: 1.4em}
 
 /* 2.4 larger text for particular items */
-
-div.postmsg p {line-height: 1.4}
+div.postmsg p {line-height: 1.4}
 div.postleft dt {font-size: 1.1em}
 .pun pre {font-size: 1.2em}
 
@@ -272,20 +271,7 @@ body.plain
 {
 	border: none;
 	background: transparent url(../img/titlelogo.png) no-repeat scroll left 10px;
-	height: 220px;
-}
-
-#brdheader a.logo
-{
-	background: transparent url(../img/titlelogo.png) no-repeat scroll left 10px;
-	display: block;
-	height: 110px;
-	width: 350px;
-}
-
-#brdheader span.logo
-{
-	display: none;
+    height: 220px;
 }
 
 #brdtitle
@@ -379,7 +365,7 @@ body.plain
 
 #brdwelcome
 {
-	padding-top: 72px;
+	padding-top: 175px;
 }
 
 
