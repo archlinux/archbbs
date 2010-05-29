@@ -246,13 +246,8 @@ margin creates space for the post status indicator */
 
 TD DIV.tclcon {MARGIN-LEFT: 2.3em}
 
-
-
-
-
-
-
-
-
-
+div#idx1 div.tclcon p, div#idx2 div.tclcon p, div#idx3 div.tclcon p, div#idx4 div.tclcon p, div#idx5 div.tclcon p
+{
+    display: none;
+}
 
