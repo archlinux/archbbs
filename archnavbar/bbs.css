@@ -1,0 +1,76 @@
+/*
+ * ARCH FORUMS
+ *
+ */
+
+/* import the global navbar stylesheet */
+@import url('archnavbar.css');
+
+/* general styling */
+* { font-family: sans-serif; }
+body { background: #eef; color: #444; }
+.pun { color: #444; }
+h1 { font-weight: bold; }
+.pun, .pun input, .pun select, .pun textarea, .pun optgroup { font-family: sans-serif; }
+.pun pre { font-size: 1em; font-family: monospace; }
+.pun { font-size: 12px; line-height: normal; }
+
+/* link style */
+.pun a { text-decoration: none; }
+.pun a:link { color: #07b; }
+.pun a:visited { color: #838; }
+.pun a:hover { text-decoration: underline; }
+.pun a:active { color: #e90; }
+
+/* general table borders */
+div.box { border-color: #ccc; }
+
+/* hide the default board header */
+div#brdtitle { display: none; }
+
+/* board main menu */
+div#brdheader div.box { border: 0; color: #555; background: transparent; }
+div#brdmenu { background: transparent !important; }
+div#brdmenu a { color: #07b !important; }
+div#brdmenu a:hover { text-decoration: underline; }
+
+/* board menu, category and topic headings */
+.pun h2, div#brdmenu { background-color: #444; color: #fff; font-weight: bold; }
+
+/* index: topics/posts columns */
+td.tc2, td.tc3, td.tcmod, #postpreview, #viewprofile dd, div.forminfo,
+div.blockmenu div.box, #adstats dd { background-color: #eef; }
+div.blockpost div.box { background-color: #fff; }
+
+/* index: sub-forum headers */
+.pun th { background-color: #cde; }
+.pun th { border-color: #cde; }
+
+/* index: forums/last posts columns */
+div.box { background-color: #fff; }
+
+/* post status indicators (arrows next to post titles) */
+div.icon { border-color: #fff #fff #fff #ddd; }
+tr.iredirect div.icon { border-color: #fff #fff #fff #eee; }
+div.inew { border-color: #fff #fff #fff #07b; }
+
+/* post headings */
+div.blockpost h2 span.conr { color: #fff; }
+div.blockpost h2 { background-color: #666; }
+div.blockpost div.box { border-top: 0; border-color: #ccc; }
+
+/* post bodies */
+div.postleft, div.postfootleft, div.blockpost label { background-color: #fff; }
+div.postright, div.postfootright { border-left-color: #fff; background-color: #fff; }
+.pun blockquote { background: #eef; border: 1px solid #ddd; font-style: italic; }
+div.codebox { background: #dfd; border: 1px solid #bdb; padding: 5px; }
+legend { color: #444 !important; }
+textarea { background: #ffc; border: 1px solid #ccc; } 
+
+/* redirect pages (ex: after login) */
+div.punredirect div.block { border: 1px solid #ccc; }
+div.punredirect div.box { background-color: #fff; }
+
+/* highlight current website in the navbar */
+#archnavbar ul li#anb-forums a { color: white !important; }
+

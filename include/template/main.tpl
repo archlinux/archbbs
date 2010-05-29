@@ -4,9 +4,10 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=<pun_char_encoding>" />
 <pun_head>
+    <link rel="stylesheet" type="text/css" href="http://bbs.archlinux.org/archnavbar/bbs.css" media="screen, projector" />
 </head>
 <body>
-
+<pun_include "archnavbar.html">
 <div id="punwrap">
 <div id="pun<pun_page>" class="pun">
 
@@ -15,16 +16,6 @@
 		<div id="brdtitle" class="inbox">
 			<pun_title>
 			<pun_desc>
-		</div>
-		<div id="main_nav">
-		<ul>
-			<li><a href="http://www.archlinux.org/download/">Download</a></li>
-			<li><a href="http://aur.archlinux.org/">AUR</a></li>
-			<li><a href="http://bugs.archlinux.org/">Bugs</a></li>
-			<li><a href="http://wiki.archlinux.org/">Wiki</a></li>
-			<li class="selected"><a href="http://bbs.archlinux.org/">Forums</a></li>
-			<li><a href="http://www.archlinux.org/">Home</a></li>
-		</ul>
 		</div>
 		<pun_navlinks>
 		<pun_status>
