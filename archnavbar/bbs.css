@@ -8,8 +8,8 @@
 
 /* general styling */
 * { font-family: sans-serif; }
-body { background: #eef; color: #444; }
-.pun { color: #444; }
+body { background: #e4eeff; color: #222; }
+.pun { color: #222; }
 h1 { font-weight: bold; }
 .pun, .pun input, .pun select, .pun textarea, .pun optgroup { font-family: sans-serif; }
 .pun pre { font-size: 1em; font-family: monospace; }
@@ -18,7 +18,7 @@ h1 { font-weight: bold; }
 /* link style */
 .pun a { text-decoration: none; }
 .pun a:link { color: #07b; }
-.pun a:visited { color: #838; }
+.pun a:visited { color: #549; }
 .pun a:hover { text-decoration: underline; }
 .pun a:active { color: #e90; }
 
@@ -64,7 +64,7 @@ div.postleft, div.postfootleft, div.blockpost label { background-color: #fff; }
 div.postright, div.postfootright { border-left-color: #fff; background-color: #fff; }
 .pun blockquote { background: #eef; border: 1px solid #ddd; font-style: italic; }
 div.codebox { background: #dfd; border: 1px solid #bdb; padding: 5px; }
-legend { color: #444 !important; }
+legend { color: #222 !important; }
 textarea { background: #ffc; border: 1px solid #ccc; } 
 
 /* redirect pages (ex: after login) */
