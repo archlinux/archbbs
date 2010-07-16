@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=<pun_char_encoding>" />
 <pun_head>
-    <link rel="stylesheet" type="text/css" href="http://bbs.archlinux.org/archnavbar/bbs.css" media="screen, projector" />
+    <link rel="stylesheet" type="text/css" href="https://bbs.archlinux.org/archnavbar/bbs.css" media="screen, projector" />
 </head>
 <body>
 <pun_include "archnavbar.html">

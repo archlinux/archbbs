@@ -34,7 +34,7 @@ $feed_desc = 'The latest Archlinux Forum Announcements';
 $fids = array(24); // 24 = Announcement forum
 
 // where to point the feed link
-$feed_url = 'http://bbs.archlinux.org/viewforum.php?id=24';
+$feed_url = 'https://bbs.archlinux.org/viewforum.php?id=24';
 
 /***********************************************************************/
 
