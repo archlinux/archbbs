@@ -1,0 +1,50 @@
+* { font-family: sans-serif; }
+#archnavbar.anb-forum ul li.anb-selected a { color: #fff !important; }
+.pun pre, .pun code { font-family: monospace; }
+html, body, .pun { background: #f6f9fc; color: #222; }
+.pun .punwrap {	border-color: #bcd; }
+
+.pun a, .pun a:link, .pun a:visited { text-decoration:none; color:#07b; outline: none; }
+.pun a:focus, #brdmain a:focus { color: #e90; }
+.pun a:hover, #brdmain a:hover { color:#999 !important; text-decoration:underline; }
+.pun a:active, #brdmain a:active { color: #e90 !important; }
+
+#brdmenu { background: #fff; }
+#brdmenu ul { margin-left: -9px; }
+#brdmenu a, #brdmenu a:link, #brdmenu a:visited { display: inline; padding-right: 10px; background: #fff; color: #07b; }
+#brdmain a:visited { color: #666; }
+#brdmenu a:hover { color:#999; text-decoration:underline; }
+#brdmenu a:active, #brdmenu a:focus { color: #e90; }
+
+.pun .postmsg a { font-weight: bold; }
+
+/* hide round edges */
+.pun .top-box { background: none; }
+.pun .top-box div { background: none; }
+.pun .end-box { background: none; }
+.pun .end-box div { background: none; }
+
+/* hide user title */
+.pun .usertitle { visibility: hidden; }
+.pun .postleft dt:hover +.usertitle { visibility: visible; }
+
+/* Hide IP address */
+.pun .postleft dd span { display: none; }
+
+/* hide moderator list */
+#brdmain .tcl .modlist { display: none; }
+
+/* replace green color */
+#punindex .blocktable h2, .pun #vf h2 { color: #444; }
+.pun .blocktable th { color: #444; }
+.pun .blockpost h2 { color: #444; }
+.pun .quotebox cite { color: #444; }
+.pun #quickpost h2, #punpost .blockform h2, #punedit .blockform h2, #posterror h2, #pundelete .blockform h2 { color: #444; }
+.pun label, .pun legend, #adminconsole fieldset th { color: #444; }
+.pun #viewprofile dt, #adstats dt { color: #444; }
+
+.pun .icon { border-color: #e8ecf1; }
+.pun .inew .icon { border-color: #07b; }
+
+.pun .quotebox { border-color: #bcd; background: #f6f9fc; color: #444; }
+.pun .codebox { border-color: #bcd; background: #ebf1f5; color: #222; }

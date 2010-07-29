@@ -1,27 +1,10 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 // Tell header.php to use the admin template
 define('PUN_ADMIN_CONSOLE', 1);
@@ -31,26 +14,27 @@ require PUN_ROOT.'include/common.php';
 require PUN_ROOT.'include/common_admin.php';
 
 
-if ($pun_user['g_id'] > PUN_MOD)
+if (!$pun_user['is_admmod'] || ($pun_user['g_moderator'] == '1' && $pun_config['o_censoring'] == '0'))
 	message($lang_common['No permission']);
 
+// Load the admin_censoring.php language file
+require PUN_ROOT.'lang/'.$admin_language.'/admin_censoring.php';
 
 // Add a censor word
 if (isset($_POST['add_word']))
 {
 	confirm_referrer('admin_censoring.php');
 
-	$search_for = trim($_POST['new_search_for']);
-	$replace_with = trim($_POST['new_replace_with']);
+	$search_for = pun_trim($_POST['new_search_for']);
+	$replace_with = pun_trim($_POST['new_replace_with']);
 
 	if ($search_for == '' || $replace_with == '')
-		message('You must enter both a word to censor and text to replace it with.');
+		message($lang_admin_censoring['Must enter both message']);
 
 	$db->query('INSERT INTO '.$db->prefix.'censoring (search_for, replace_with) VALUES (\''.$db->escape($search_for).'\', \''.$db->escape($replace_with).'\')') or error('Unable to add censor word', __FILE__, __LINE__, $db->error());
 
-	redirect('admin_censoring.php', 'Censor word added. Redirecting &hellip;');
+	redirect('admin_censoring.php', $lang_admin_censoring['Word added redirect']);
 }
-
 
 // Update a censor word
 else if (isset($_POST['update']))
@@ -59,17 +43,16 @@ else if (isset($_POST['update']))
 
 	$id = intval(key($_POST['update']));
 
-	$search_for = trim($_POST['search_for'][$id]);
-	$replace_with = trim($_POST['replace_with'][$id]);
+	$search_for = pun_trim($_POST['search_for'][$id]);
+	$replace_with = pun_trim($_POST['replace_with'][$id]);
 
 	if ($search_for == '' || $replace_with == '')
-		message('You must enter both text to search for and text to replace with.');
+		message($lang_admin_censoring['Must search both message']);
 
 	$db->query('UPDATE '.$db->prefix.'censoring SET search_for=\''.$db->escape($search_for).'\', replace_with=\''.$db->escape($replace_with).'\' WHERE id='.$id) or error('Unable to update censor word', __FILE__, __LINE__, $db->error());
 
-	redirect('admin_censoring.php', 'Censor word updated. Redirecting &hellip;');
+	redirect('admin_censoring.php', $lang_admin_censoring['Word updated redirect']);
 }
-
 
 // Remove a censor word
 else if (isset($_POST['remove']))
@@ -80,39 +63,39 @@ else if (isset($_POST['remove']))
 
 	$db->query('DELETE FROM '.$db->prefix.'censoring WHERE id='.$id) or error('Unable to delete censor word', __FILE__, __LINE__, $db->error());
 
-	redirect('admin_censoring.php', 'Censor word removed. Redirecting &hellip;');
+	redirect('admin_censoring.php',  $lang_admin_censoring['Word removed redirect']);
 }
 
-
-$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / Admin / Censoring';
+$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_admin_common['Admin'], $lang_admin_common['Censoring']);
 $focus_element = array('censoring', 'new_search_for');
+define('PUN_ACTIVE_PAGE', 'admin');
 require PUN_ROOT.'header.php';
 
 generate_admin_menu('censoring');
 
 ?>
 	<div class="blockform">
-		<h2><span>Censoring</span></h2>
+		<h2><span><?php echo $lang_admin_censoring['Censoring head'] ?></span></h2>
 		<div class="box">
 			<form id="censoring" method="post" action="admin_censoring.php?action=foo">
 				<div class="inform">
 					<fieldset>
-						<legend>Add word</legend>
+						<legend><?php echo $lang_admin_censoring['Add word subhead'] ?></legend>
 						<div class="infldset">
-							<p>Enter a word that you want to censor and the replacement text for this word. Wildcards are accepted (i.e. *some* would match somewhere and lonesome). Censor words also affect usernames. New users will not be able to register with usernames containing any censored words. The search is case insensitive. <strong>Censor words must be enabled in <a href="admin_options.php#censoring">Options</a> for this to have any effect.</strong></p>
-							<table  cellspacing="0">
+							<p><?php echo $lang_admin_censoring['Add word info'].($pun_user['g_id'] != PUN_ADMIN ? '' : ' '.($pun_config['o_censoring'] == '1' ? sprintf($lang_admin_censoring['Censoring enabled'], '<a href="admin_options.php#censoring">'.$lang_admin_common['Options'].'</a>') : sprintf($lang_admin_censoring['Censoring disabled'], '<a href="admin_options.php#censoring">'.$lang_admin_common['Options'].'</a>'))) ?></p>
+							<table cellspacing="0">
 							<thead>
 								<tr>
-									<th class="tcl" scope="col">Censored&nbsp;word</th>
-									<th class="tc2" scope="col">Replacement&nbsp;text</th>
-									<th class="hidehead" scope="col">Action</th>
+									<th class="tcl" scope="col"><?php echo $lang_admin_censoring['Censored word label'] ?></th>
+									<th class="tc2" scope="col"><?php echo $lang_admin_censoring['Replacement label'] ?></th>
+									<th class="hidehead" scope="col"><?php echo $lang_admin_censoring['Action label'] ?></th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
-									<td><input type="text" name="new_search_for" size="24" maxlength="60" tabindex="1" /></td>
-									<td><input type="text" name="new_replace_with" size="24" maxlength="60" tabindex="2" /></td>
-									<td><input type="submit" name="add_word" value=" Add " tabindex="3" /></td>
+									<td class="tcl"><input type="text" name="new_search_for" size="24" maxlength="60" tabindex="1" /></td>
+									<td class="tc2"><input type="text" name="new_replace_with" size="24" maxlength="60" tabindex="2" /></td>
+									<td><input type="submit" name="add_word" value="<?php echo $lang_admin_common['Add'] ?>" tabindex="3" /></td>
 								</tr>
 							</tbody>
 							</table>
@@ -121,7 +104,7 @@ generate_admin_menu('censoring');
 				</div>
 				<div class="inform">
 					<fieldset>
-						<legend>Edit/remove words</legend>
+						<legend><?php echo $lang_admin_censoring['Edit remove subhead'] ?></legend>
 						<div class="infldset">
 <?php
 
@@ -133,16 +116,16 @@ if ($db->num_rows($result))
 							<table cellspacing="0" >
 							<thead>
 								<tr>
-									<th class="tcl" scope="col">Censored&nbsp;word</th>
-									<th class="tc2" scope="col">Replacement&nbsp;text</th>
-									<th class="hidehead" scope="col">Actions</th>
+									<th class="tcl" scope="col"><?php echo $lang_admin_censoring['Censored word label'] ?></th>
+									<th class="tc2" scope="col"><?php echo $lang_admin_censoring['Replacement label'] ?></th>
+									<th class="hidehead" scope="col"><?php echo $lang_admin_censoring['Action label'] ?></th>
 								</tr>
 							</thead>
 							<tbody>
 <?php
 
 	while ($cur_word = $db->fetch_assoc($result))
-		echo "\t\t\t\t\t\t\t\t".'<tr><td><input type="text" name="search_for['.$cur_word['id'].']" value="'.pun_htmlspecialchars($cur_word['search_for']).'" size="24" maxlength="60" /></td><td><input type="text" name="replace_with['.$cur_word['id'].']" value="'.pun_htmlspecialchars($cur_word['replace_with']).'" size="24" maxlength="60" /></td><td><input type="submit" name="update['.$cur_word['id'].']" value="Update" />&nbsp;<input type="submit" name="remove['.$cur_word['id'].']" value="Remove" /></td></tr>'."\n";
+		echo "\t\t\t\t\t\t\t\t".'<tr><td class="tcl"><input type="text" name="search_for['.$cur_word['id'].']" value="'.pun_htmlspecialchars($cur_word['search_for']).'" size="24" maxlength="60" /></td><td class="tc2"><input type="text" name="replace_with['.$cur_word['id'].']" value="'.pun_htmlspecialchars($cur_word['replace_with']).'" size="24" maxlength="60" /></td><td><input type="submit" name="update['.$cur_word['id'].']" value="'.$lang_admin_common['Update'].'" />&#160;<input type="submit" name="remove['.$cur_word['id'].']" value="'.$lang_admin_common['Remove'].'" /></td></tr>'."\n";
 
 ?>
 							</tbody>
@@ -151,7 +134,7 @@ if ($db->num_rows($result))
 
 }
 else
-	echo "\t\t\t\t\t\t\t".'<p>No censor words in list.</p>'."\n";
+	echo "\t\t\t\t\t\t\t".'<p>'.$lang_admin_censoring['No words in list'].'</p>'."\n";
 
 ?>
 						</div>

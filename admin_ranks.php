@@ -1,27 +1,10 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 // Tell header.php to use the admin template
 define('PUN_ADMIN_CONSOLE', 1);
@@ -31,36 +14,40 @@ require PUN_ROOT.'include/common.php';
 require PUN_ROOT.'include/common_admin.php';
 
 
-if ($pun_user['g_id'] > PUN_ADMIN)
+if ($pun_user['g_id'] != PUN_ADMIN)
 	message($lang_common['No permission']);
 
+// Load the admin_ranks.php language file
+require PUN_ROOT.'lang/'.$admin_language.'/admin_ranks.php';
 
 // Add a rank
 if (isset($_POST['add_rank']))
 {
 	confirm_referrer('admin_ranks.php');
 
-	$rank = trim($_POST['new_rank']);
-	$min_posts = $_POST['new_min_posts'];
+	$rank = pun_trim($_POST['new_rank']);
+	$min_posts = trim($_POST['new_min_posts']);
 
 	if ($rank == '')
-		message('You must enter a rank title.');
+		message($lang_admin_ranks['Must enter title message']);
 
-	if (!@preg_match('#^\d+$#', $min_posts))
-		message('Minimum posts must be a positive integer value.');
+	if ($min_posts == '' || preg_match('/[^0-9]/', $min_posts))
+		message($lang_admin_ranks['Must be integer message']);
 
 	// Make sure there isn't already a rank with the same min_posts value
 	$result = $db->query('SELECT 1 FROM '.$db->prefix.'ranks WHERE min_posts='.$min_posts) or error('Unable to fetch rank info', __FILE__, __LINE__, $db->error());
 	if ($db->num_rows($result))
-		message('There is already a rank with a minimun posts value of '.$min_posts.'.');
+		message(sprintf($lang_admin_ranks['Dupe min posts message'], $min_posts));
 
 	$db->query('INSERT INTO '.$db->prefix.'ranks (rank, min_posts) VALUES(\''.$db->escape($rank).'\', '.$min_posts.')') or error('Unable to add rank', __FILE__, __LINE__, $db->error());
 
 	// Regenerate the ranks cache
-	require_once PUN_ROOT.'include/cache.php';
+	if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+		require PUN_ROOT.'include/cache.php';
+
 	generate_ranks_cache();
 
-	redirect('admin_ranks.php', 'Rank added. Redirecting &hellip;');
+	redirect('admin_ranks.php', $lang_admin_ranks['Rank added redirect']);
 }
 
 
@@ -71,27 +58,29 @@ else if (isset($_POST['update']))
 
 	$id = intval(key($_POST['update']));
 
-	$rank = trim($_POST['rank'][$id]);
+	$rank = pun_trim($_POST['rank'][$id]);
 	$min_posts = trim($_POST['min_posts'][$id]);
 
 	if ($rank == '')
-		message('You must enter a rank title.');
+		message($lang_admin_ranks['Must enter title message']);
 
-	if (!@preg_match('#^\d+$#', $min_posts))
-		message('Minimum posts must be a positive integer value.');
+	if ($min_posts == '' || preg_match('/[^0-9]/', $min_posts))
+		message($lang_admin_ranks['Must be integer message']);
 
 	// Make sure there isn't already a rank with the same min_posts value
 	$result = $db->query('SELECT 1 FROM '.$db->prefix.'ranks WHERE id!='.$id.' AND min_posts='.$min_posts) or error('Unable to fetch rank info', __FILE__, __LINE__, $db->error());
 	if ($db->num_rows($result))
-		message('There is already a rank with a minimun posts value of '.$min_posts.'.');
+		message(sprintf($lang_admin_ranks['Dupe min posts message'], $min_posts));
 
 	$db->query('UPDATE '.$db->prefix.'ranks SET rank=\''.$db->escape($rank).'\', min_posts='.$min_posts.' WHERE id='.$id) or error('Unable to update rank', __FILE__, __LINE__, $db->error());
 
 	// Regenerate the ranks cache
-	require_once PUN_ROOT.'include/cache.php';
+	if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+		require PUN_ROOT.'include/cache.php';
+
 	generate_ranks_cache();
 
-	redirect('admin_ranks.php', 'Rank updated. Redirecting &hellip;');
+	redirect('admin_ranks.php', $lang_admin_ranks['Rank updated redirect']);
 }
 
 
@@ -105,42 +94,44 @@ else if (isset($_POST['remove']))
 	$db->query('DELETE FROM '.$db->prefix.'ranks WHERE id='.$id) or error('Unable to delete rank', __FILE__, __LINE__, $db->error());
 
 	// Regenerate the ranks cache
-	require_once PUN_ROOT.'include/cache.php';
+	if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+		require PUN_ROOT.'include/cache.php';
+
 	generate_ranks_cache();
 
-	redirect('admin_ranks.php', 'Rank removed. Redirecting &hellip;');
+	redirect('admin_ranks.php', $lang_admin_ranks['Rank removed redirect']);
 }
 
-
-$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / Admin / Ranks';
+$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_admin_common['Admin'], $lang_admin_common['Ranks']);
 $focus_element = array('ranks', 'new_rank');
+define('PUN_ACTIVE_PAGE', 'admin');
 require PUN_ROOT.'header.php';
 
 generate_admin_menu('ranks');
 
 ?>
 	<div class="blockform">
-		<h2><span>Ranks</span></h2>
+		<h2><span><?php echo $lang_admin_ranks['Ranks head'] ?></span></h2>
 		<div class="box">
 			<form id="ranks" method="post" action="admin_ranks.php?action=foo">
 				<div class="inform">
 					<fieldset>
-						<legend>Add rank</legend>
+						<legend><?php echo $lang_admin_ranks['Add rank subhead'] ?></legend>
 						<div class="infldset">
-							<p>Enter a rank and the minimum number of posts that a user has to have to aquire the rank. Different ranks cannot have the same value for minimum posts. If a title is set for a user, the title will be displayed instead of any rank. <strong>User ranks must be enabled in <a href="admin_options.php#ranks">Options</a> for this to have any effect.</strong></p>
-							<table  cellspacing="0">
+							<p><?php echo $lang_admin_ranks['Add rank info'].' '.($pun_config['o_ranks'] == '1' ? sprintf($lang_admin_ranks['Ranks enabled'], '<a href="admin_options.php#ranks">'.$lang_admin_common['Options'].'</a>') : sprintf($lang_admin_ranks['Ranks disabled'], '<a href="admin_options.php#ranks">'.$lang_admin_common['Options'].'</a>')) ?></p>
+							<table cellspacing="0">
 							<thead>
 								<tr>
-									<th class="tcl" scope="col">Rank&nbsp;title</th>
-									<th class="tc2" scope="col">Minimum&nbsp;posts</th>
-									<th class="hidehead" scope="col">Action</th>
+									<th class="tcl" scope="col"><?php echo $lang_admin_ranks['Rank title label'] ?></th>
+									<th class="tc2" scope="col"><?php echo $lang_admin_ranks['Minimum posts label'] ?></th>
+									<th class="hidehead" scope="col"><?php echo $lang_admin_ranks['Actions label'] ?></th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
-									<td><input type="text" name="new_rank" size="24" maxlength="50" tabindex="1" /></td>
-									<td><input type="text" name="new_min_posts" size="7" maxlength="7" tabindex="2" /></td>
-									<td><input type="submit" name="add_rank" value=" Add " tabindex="3" /></td>
+									<td class="tcl"><input type="text" name="new_rank" size="24" maxlength="50" tabindex="1" /></td>
+									<td class="tc2"><input type="text" name="new_min_posts" size="7" maxlength="7" tabindex="2" /></td>
+									<td><input type="submit" name="add_rank" value="<?php echo $lang_admin_common['Add'] ?>" tabindex="3" /></td>
 								</tr>
 							</tbody>
 							</table>
@@ -149,7 +140,7 @@ generate_admin_menu('ranks');
 				</div>
 				<div class="inform">
 					<fieldset>
-						<legend>Edit/remove ranks</legend>
+						<legend><?php echo $lang_admin_ranks['Edit remove subhead'] ?></legend>
 						<div class="infldset">
 <?php
 
@@ -158,19 +149,19 @@ if ($db->num_rows($result))
 {
 
 ?>
-							<table  cellspacing="0">
+							<table cellspacing="0">
 							<thead>
 								<tr>
-									<th class="tcl" scope="col"><strong>Rank&nbsp;title</strong></th>
-									<th class="tc2" scope="col"><strong>Minimum&nbsp;Posts</strong></th>
-									<th class="hidehead" scope="col">Actions</th>
+									<th class="tcl" scope="col"><?php echo $lang_admin_ranks['Rank title label'] ?></th>
+									<th class="tc2" scope="col"><?php echo $lang_admin_ranks['Minimum posts label'] ?></th>
+									<th class="hidehead" scope="col"><?php echo $lang_admin_ranks['Actions label'] ?></th>
 								</tr>
 							</thead>
 							<tbody>
 <?php
 
 	while ($cur_rank = $db->fetch_assoc($result))
-		echo "\t\t\t\t\t\t\t\t".'<tr><td><input type="text" name="rank['.$cur_rank['id'].']" value="'.pun_htmlspecialchars($cur_rank['rank']).'" size="24" maxlength="50" /></td><td><input type="text" name="min_posts['.$cur_rank['id'].']" value="'.$cur_rank['min_posts'].'" size="7" maxlength="7" /></td><td><input type="submit" name="update['.$cur_rank['id'].']" value="Update" />&nbsp;<input type="submit" name="remove['.$cur_rank['id'].']" value="Remove" /></td></tr>'."\n";
+		echo "\t\t\t\t\t\t\t\t".'<tr><td class="tcl"><input type="text" name="rank['.$cur_rank['id'].']" value="'.pun_htmlspecialchars($cur_rank['rank']).'" size="24" maxlength="50" /></td><td class="tc2"><input type="text" name="min_posts['.$cur_rank['id'].']" value="'.$cur_rank['min_posts'].'" size="7" maxlength="7" /></td><td><input type="submit" name="update['.$cur_rank['id'].']" value="'.$lang_admin_common['Update'].'" />&#160;<input type="submit" name="remove['.$cur_rank['id'].']" value="'.$lang_admin_common['Remove'].'" /></td></tr>'."\n";
 
 ?>
 							</tbody>
@@ -179,7 +170,7 @@ if ($db->num_rows($result))
 
 }
 else
-	echo "\t\t\t\t\t\t\t".'<p>No ranks in list.</p>'."\n";
+	echo "\t\t\t\t\t\t\t".'<p>'.$lang_admin_ranks['No ranks in list'].'</p>'."\n";
 
 ?>
 						</div>

@@ -1,27 +1,10 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
@@ -36,21 +19,20 @@ if ($id < 1)
 	message($lang_common['Bad request']);
 
 // Fetch some info about the post, the topic and the forum
-$result = $db->query('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.posted, t.closed, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$id) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
+$result = $db->query('SELECT f.id AS fid, f.forum_name, f.moderators, f.redirect_url, fp.post_replies, fp.post_topics, t.id AS tid, t.subject, t.first_post_id, t.closed, p.posted, p.poster, p.poster_id, p.message, p.hide_smilies FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$id) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
 if (!$db->num_rows($result))
 	message($lang_common['Bad request']);
 
 $cur_post = $db->fetch_assoc($result);
 
+if ($pun_config['o_censoring'] == '1')
+	$cur_post['subject'] = censor_words($cur_post['subject']);
+
 // Sort out who the moderators are and if we are currently a moderator (or an admin)
 $mods_array = ($cur_post['moderators'] != '') ? unserialize($cur_post['moderators']) : array();
-$is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_id'] == PUN_MOD && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
+$is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_moderator'] == '1' && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
 
-// Determine whether this post is the "topic post" or not
-$result = $db->query('SELECT id FROM '.$db->prefix.'posts WHERE topic_id='.$cur_post['tid'].' ORDER BY posted LIMIT 1') or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
-$topic_post_id = $db->result($result);
-
-$is_topic_post = ($id == $topic_post_id) ? true : false;
+$is_topic_post = ($id == $cur_post['first_post_id']) ? true : false;
 
 // Do we have permission to edit this post?
 if (($pun_user['g_delete_posts'] == '0' ||
@@ -90,7 +72,8 @@ if (isset($_POST['delete']))
 }
 
 
-$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / '.$lang_delete['Delete post'];
+$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_delete['Delete post']);
+define ('PUN_ACTIVE_PAGE', 'index');
 require PUN_ROOT.'header.php';
 
 require PUN_ROOT.'include/parser.php';
@@ -99,7 +82,12 @@ $cur_post['message'] = parse_message($cur_post['message'], $cur_post['hide_smili
 ?>
 <div class="linkst">
 	<div class="inbox">
-		<ul><li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li><li>&nbsp;&raquo;&nbsp;<a href="viewforum.php?id=<?php echo $cur_post['fid'] ?>"><?php echo pun_htmlspecialchars($cur_post['forum_name']) ?></a></li><li>&nbsp;&raquo;&nbsp;<?php echo pun_htmlspecialchars($cur_post['subject']) ?></li></ul>
+		<ul class="crumbs">
+			<li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li>
+			<li><span>»&#160;</span><a href="viewforum.php?id=<?php echo $cur_post['fid'] ?>"><?php echo pun_htmlspecialchars($cur_post['forum_name']) ?></a></li>
+			<li><span>»&#160;</span><a href="viewtopic.php?pid=<?php echo $id ?>#p<?php echo $id ?>"><?php echo pun_htmlspecialchars($cur_post['subject']) ?></a></li>
+			<li><span>»&#160;</span><strong><?php echo $lang_delete['Delete post'] ?></strong></li>
+		</ul>
 	</div>
 </div>
 
@@ -108,18 +96,36 @@ $cur_post['message'] = parse_message($cur_post['message'], $cur_post['hide_smili
 	<div class="box">
 		<form method="post" action="delete.php?id=<?php echo $id ?>">
 			<div class="inform">
-				<fieldset>
-					<legend class="warntext"><?php echo $lang_delete['Warning'] ?></legend>
-					<div class="infldset">
+				<div class="forminfo">
+					<h3><span><?php printf($is_topic_post ? $lang_delete['Topic by'] : $lang_delete['Reply by'], '<strong>'.pun_htmlspecialchars($cur_post['poster']).'</strong>', format_time($cur_post['posted'])) ?></span></h3>
+					<p><?php echo ($is_topic_post) ? '<strong>'.$lang_delete['Topic warning'].'</strong>' : '<strong>'.$lang_delete['Warning'].'</strong>' ?><br /><?php echo $lang_delete['Delete info'] ?></p>
+				</div>
+			</div>
+			<p class="buttons"><input type="submit" name="delete" value="<?php echo $lang_delete['Delete'] ?>" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+		</form>
+	</div>
+</div>
+
+<div id="postreview">
+	<div class="blockpost">
+		<div class="box<?php echo ($post_count % 2 == 0) ? ' roweven' : ' rowodd' ?>">
+			<div class="inbox">
+				<div class="postbody">
+					<div class="postleft">
+						<dl>
+							<dt><strong><?php echo pun_htmlspecialchars($cur_post['poster']) ?></strong></dt>
+							<dd><span><?php echo format_time($cur_post['posted']) ?></span></dd>
+						</dl>
+					</div>
+					<div class="postright">
 						<div class="postmsg">
-							<p><?php echo $lang_common['Author'] ?>: <strong><?php echo pun_htmlspecialchars($cur_post['poster']) ?></strong></p>
-							<?php echo $cur_post['message'] ?>
+							<?php echo $cur_post['message']."\n" ?>
 						</div>
 					</div>
-				</fieldset>
+				</div>
+				<div class="clearer"></div>
 			</div>
-			<p><input type="submit" name="delete" value="<?php echo $lang_delete['Delete'] ?>" /><a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
-		</form>
+		</div>
 	</div>
 </div>
 <?php

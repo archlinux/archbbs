@@ -1,44 +1,14 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 // Make sure no one attempts to run this script "directly"
 if (!defined('PUN'))
 	exit;
-
-
-//
-// Return current timestamp (with microseconds) as a float (used in dblayer)
-//
-if (defined('PUN_SHOW_QUERIES'))
-{
-	function get_microtime()
-	{
-		list($usec, $sec) = explode(' ', microtime());
-		return ((float)$usec + (float)$sec);
-	}
-}
 
 
 // Load the appropriate DB layer class
@@ -48,8 +18,16 @@ switch ($db_type)
 		require PUN_ROOT.'include/dblayer/mysql.php';
 		break;
 
+	case 'mysql_innodb':
+		require PUN_ROOT.'include/dblayer/mysql_innodb.php';
+		break;
+
 	case 'mysqli':
 		require PUN_ROOT.'include/dblayer/mysqli.php';
+		break;
+
+	case 'mysqli_innodb':
+		require PUN_ROOT.'include/dblayer/mysqli_innodb.php';
 		break;
 
 	case 'pgsql':

@@ -1,27 +1,10 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
@@ -53,39 +36,51 @@ if ($cur_forum['redirect_url'] != '')
 }
 
 // Sort out who the moderators are and if we are currently a moderator (or an admin)
-$mods_array = array();
-if ($cur_forum['moderators'] != '')
-	$mods_array = unserialize($cur_forum['moderators']);
-
-$is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_id'] == PUN_MOD && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
+$mods_array = ($cur_forum['moderators'] != '') ? unserialize($cur_forum['moderators']) : array();
+$is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_moderator'] == '1' && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
 
 // Can we or can we not post new topics?
 if (($cur_forum['post_topics'] == '' && $pun_user['g_post_topics'] == '1') || $cur_forum['post_topics'] == '1' || $is_admmod)
-	$post_link = "\t\t".'<p class="postlink conr"><a href="post.php?fid='.$id.'">'.$lang_forum['Post topic'].'</a></p>'."\n";
+	$post_link = "\t\t\t".'<p class="postlink conr"><a href="post.php?fid='.$id.'">'.$lang_forum['Post topic'].'</a></p>'."\n";
 else
 	$post_link = '';
+
+
+// Get topic/forum tracking data
+if (!$pun_user['is_guest'])
+	$tracked_topics = get_tracked_topics();
 
 
 // Determine the topic offset (based on $_GET['p'])
 $num_pages = ceil($cur_forum['num_topics'] / $pun_user['disp_topics']);
 
-$p = (!isset($_GET['p']) || $_GET['p'] <= 1 || $_GET['p'] > $num_pages) ? 1 : $_GET['p'];
+$p = (!isset($_GET['p']) || $_GET['p'] <= 1 || $_GET['p'] > $num_pages) ? 1 : intval($_GET['p']);
 $start_from = $pun_user['disp_topics'] * ($p - 1);
 
 // Generate paging links
-$paging_links = $lang_common['Pages'].': '.paginate($num_pages, $p, 'viewforum.php?id='.$id);
+$paging_links = '<span class="pages-label">'.$lang_common['Pages'].' </span>'.paginate($num_pages, $p, 'viewforum.php?id='.$id);
 
+if ($pun_config['o_feed_type'] == '1')
+	$page_head = array('feed' => '<link rel="alternate" type="application/rss+xml" href="extern.php?action=feed&amp;fid='.$id.'&amp;type=rss" title="'.$lang_common['RSS forum feed'].'" />');
+else if ($pun_config['o_feed_type'] == '2')
+	$page_head = array('feed' => '<link rel="alternate" type="application/atom+xml" href="extern.php?action=feed&amp;fid='.$id.'&amp;type=atom" title="'.$lang_common['Atom forum feed'].'" />');
 
-$page_title = pun_htmlspecialchars($pun_config['o_board_title'].' / '.$cur_forum['forum_name']);
+$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), pun_htmlspecialchars($cur_forum['forum_name']));
 define('PUN_ALLOW_INDEX', 1);
+define('PUN_ACTIVE_PAGE', 'index');
 require PUN_ROOT.'header.php';
 
 ?>
 <div class="linkst">
-	<div class="inbox">
-		<p class="pagelink conl"><?php echo $paging_links ?></p>
+	<div class="inbox crumbsplus">
+		<ul class="crumbs">
+			<li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li>
+			<li><span>»&#160;</span><strong><?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></strong></li>
+		</ul>
+		<div class="pagepost">
+			<p class="pagelink conl"><?php echo $paging_links ?></p>
 <?php echo $post_link ?>
-		<ul><li><a href="index.php"><?php echo $lang_common['Index'] ?></a>&nbsp;</li><li>&raquo;&nbsp;<?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></li></ul>
+		</div>
 		<div class="clearer"></div>
 	</div>
 </div>
@@ -99,8 +94,8 @@ require PUN_ROOT.'header.php';
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Topic'] ?></th>
 					<th class="tc2" scope="col"><?php echo $lang_common['Replies'] ?></th>
-					<th class="tc3" scope="col"><?php echo $lang_forum['Views'] ?></th>
-					<th class="tcr" scope="col"><?php echo $lang_common['Last post'] ?></th>
+<?php if ($pun_config['o_topic_views'] == '1'): ?>					<th class="tc3" scope="col"><?php echo $lang_forum['Views'] ?></th>
+<?php endif; ?>					<th class="tcr" scope="col"><?php echo $lang_common['Last post'] ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -135,88 +130,96 @@ else
 
 $result = $db->query($sql) or error('Unable to fetch topic list', __FILE__, __LINE__, $db->error());
 
-// If there are topics in this forum.
+// If there are topics in this forum
 if ($db->num_rows($result))
 {
+	$topic_count = 0;
 	while ($cur_topic = $db->fetch_assoc($result))
 	{
-		$icon_text = $lang_common['Normal icon'];
-		$item_status = '';
+		++$topic_count;
+		$status_text = array();
+		$item_status = ($topic_count % 2 == 0) ? 'roweven' : 'rowodd';
 		$icon_type = 'icon';
 
 		if ($cur_topic['moved_to'] == null)
-			$last_post = '<a href="viewtopic.php?pid='.$cur_topic['last_post_id'].'#p'.$cur_topic['last_post_id'].'">'.format_time($cur_topic['last_post']).'</a> <span class="byuser">'.$lang_common['by'].'&nbsp;'.pun_htmlspecialchars($cur_topic['last_poster']).'</span>';
+			$last_post = '<a href="viewtopic.php?pid='.$cur_topic['last_post_id'].'#p'.$cur_topic['last_post_id'].'">'.format_time($cur_topic['last_post']).'</a> <span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['last_poster']).'</span>';
 		else
-			$last_post = '&nbsp;';
+			$last_post = '- - -';
 
 		if ($pun_config['o_censoring'] == '1')
 			$cur_topic['subject'] = censor_words($cur_topic['subject']);
 
-		if ($cur_topic['moved_to'] != 0)
-			$subject = $lang_forum['Moved'].': <a href="viewtopic.php?id='.$cur_topic['moved_to'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].'&nbsp;'.pun_htmlspecialchars($cur_topic['poster']).'</span>';
-		else if ($cur_topic['closed'] == '0')
-			$subject = '<a href="viewtopic.php?id='.$cur_topic['id'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].'&nbsp;'.pun_htmlspecialchars($cur_topic['poster']).'</span>';
-		else
+		if ($cur_topic['sticky'] == '1')
 		{
-			$subject = '<a href="viewtopic.php?id='.$cur_topic['id'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].'&nbsp;'.pun_htmlspecialchars($cur_topic['poster']).'</span>';
-			$icon_text = $lang_common['Closed icon'];
-			$item_status = 'iclosed';
+			$item_status .= ' isticky';
+			$status_text[] = '<span class="stickytext">'.$lang_forum['Sticky'].'</span>';
 		}
 
-		if (!$pun_user['is_guest'] && $cur_topic['last_post'] > $pun_user['last_visit'] && $cur_topic['moved_to'] == null)
+		if ($cur_topic['moved_to'] != 0)
 		{
-			$icon_text .= ' '.$lang_common['New icon'];
+			$subject = '<a href="viewtopic.php?id='.$cur_topic['moved_to'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['poster']).'</span>';
+			$status_text[] = '<span class="movedtext">'.$lang_forum['Moved'].'</span>';
+			$item_status .= ' imoved';
+		}
+		else if ($cur_topic['closed'] == '0')
+			$subject = '<a href="viewtopic.php?id='.$cur_topic['id'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['poster']).'</span>';
+		else
+		{
+			$subject = '<a href="viewtopic.php?id='.$cur_topic['id'].'">'.pun_htmlspecialchars($cur_topic['subject']).'</a> <span class="byuser">'.$lang_common['by'].' '.pun_htmlspecialchars($cur_topic['poster']).'</span>';
+			$status_text[] = '<span class="closedtext">'.$lang_forum['Closed'].'</span>';
+			$item_status .= ' iclosed';
+		}
+
+		if (!$pun_user['is_guest'] && $cur_topic['last_post'] > $pun_user['last_visit'] && (!isset($tracked_topics['topics'][$cur_topic['id']]) || $tracked_topics['topics'][$cur_topic['id']] < $cur_topic['last_post']) && (!isset($tracked_topics['forums'][$id]) || $tracked_topics['forums'][$id] < $cur_topic['last_post']) && $cur_topic['moved_to'] == null)
+		{
 			$item_status .= ' inew';
-			$icon_type = 'icon inew';
+			$icon_type = 'icon icon-new';
 			$subject = '<strong>'.$subject.'</strong>';
-			$subject_new_posts = '<span class="newtext">[&nbsp;<a href="viewtopic.php?id='.$cur_topic['id'].'&amp;action=new" title="'.$lang_common['New posts info'].'">'.$lang_common['New posts'].'</a>&nbsp;]</span>';
+			$subject_new_posts = '<span class="newtext">[ <a href="viewtopic.php?id='.$cur_topic['id'].'&amp;action=new" title="'.$lang_common['New posts info'].'">'.$lang_common['New posts'].'</a> ]</span>';
 		}
 		else
 			$subject_new_posts = null;
+
+		// Insert the status text before the subject
+		$subject = implode(' ', $status_text).' '.$subject;
 
 		// Should we display the dot or not? :)
 		if (!$pun_user['is_guest'] && $pun_config['o_show_dot'] == '1')
 		{
 			if ($cur_topic['has_posted'] == $pun_user['id'])
-				$subject = '<strong>&middot;</strong>&nbsp;'.$subject;
-			else
-				$subject = '&nbsp;&nbsp;'.$subject;
-		}
-
-		if ($cur_topic['sticky'] == '1')
-		{
-			$subject = '<span class="stickytext">'.$lang_forum['Sticky'].': </span>'.$subject;
-			$item_status .= ' isticky';
-			$icon_text .= ' '.$lang_forum['Sticky'];
+			{
+				$subject = '<strong class="ipost">·&#160;</strong>'.$subject;
+				$item_status .= ' iposted';
+			}
 		}
 
 		$num_pages_topic = ceil(($cur_topic['num_replies'] + 1) / $pun_user['disp_posts']);
 
 		if ($num_pages_topic > 1)
-			$subject_multipage = '[ '.paginate($num_pages_topic, -1, 'viewtopic.php?id='.$cur_topic['id']).' ]';
+			$subject_multipage = '<span class="pagestext">[ '.paginate($num_pages_topic, -1, 'viewtopic.php?id='.$cur_topic['id']).' ]</span>';
 		else
 			$subject_multipage = null;
 
 		// Should we show the "New posts" and/or the multipage links?
 		if (!empty($subject_new_posts) || !empty($subject_multipage))
 		{
-			$subject .= '&nbsp; '.(!empty($subject_new_posts) ? $subject_new_posts : '');
+			$subject .= !empty($subject_new_posts) ? ' '.$subject_new_posts : '';
 			$subject .= !empty($subject_multipage) ? ' '.$subject_multipage : '';
 		}
 
 ?>
-				<tr<?php if ($item_status != '') echo ' class="'.trim($item_status).'"'; ?>>
+				<tr class="<?php echo $item_status ?>">
 					<td class="tcl">
-						<div class="intd">
-							<div class="<?php echo $icon_type ?>"><div class="nosize"><?php echo trim($icon_text) ?></div></div>
-							<div class="tclcon">
+						<div class="<?php echo $icon_type ?>"><div class="nosize"><?php echo forum_number_format($topic_count + $start_from) ?></div></div>
+						<div class="tclcon">
+							<div>
 								<?php echo $subject."\n" ?>
 							</div>
 						</div>
 					</td>
-					<td class="tc2"><?php echo ($cur_topic['moved_to'] == null) ? $cur_topic['num_replies'] : '&nbsp;' ?></td>
-					<td class="tc3"><?php echo ($cur_topic['moved_to'] == null) ? $cur_topic['num_views'] : '&nbsp;' ?></td>
-					<td class="tcr"><?php echo $last_post ?></td>
+					<td class="tc2"><?php echo ($cur_topic['moved_to'] == null) ? forum_number_format($cur_topic['num_replies']) : '-' ?></td>
+<?php if ($pun_config['o_topic_views'] == '1'): ?>					<td class="tc3"><?php echo ($cur_topic['moved_to'] == null) ? forum_number_format($cur_topic['num_views']) : '-' ?></td>
+<?php endif; ?>					<td class="tcr"><?php echo $last_post ?></td>
 				</tr>
 <?php
 
@@ -224,10 +227,18 @@ if ($db->num_rows($result))
 }
 else
 {
+	$colspan = ($pun_config['o_topic_views'] == '1') ? 4 : 3;
 
 ?>
-				<tr>
-					<td class="tcl" colspan="4"><?php echo $lang_forum['Empty forum'] ?></td>
+				<tr class="rowodd inone">
+					<td class="tcl" colspan="<?php echo $colspan ?>">
+						<div class="icon inone"><div class="nosize"><!-- --></div></div>
+						<div class="tclcon">
+							<div>
+								<strong><?php echo $lang_forum['Empty forum'] ?></strong>
+							</div>
+						</div>
+					</td>
 				</tr>
 <?php
 
@@ -241,10 +252,15 @@ else
 </div>
 
 <div class="linksb">
-	<div class="inbox">
-		<p class="pagelink conl"><?php echo $paging_links ?></p>
+	<div class="inbox crumbsplus">
+		<div class="pagepost">
+			<p class="pagelink conl"><?php echo $paging_links ?></p>
 <?php echo $post_link ?>
-		<ul><li><a href="index.php"><?php echo $lang_common['Index'] ?></a>&nbsp;</li><li>&raquo;&nbsp;<?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></li></ul>
+		</div>
+		<ul class="crumbs">
+			<li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li>
+			<li><span>»&#160;</span><strong><?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></strong></li>
+		</ul>
 		<div class="clearer"></div>
 	</div>
 </div>
@@ -253,4 +269,3 @@ else
 $forum_id = $id;
 $footer_style = 'viewforum';
 require PUN_ROOT.'footer.php';
-

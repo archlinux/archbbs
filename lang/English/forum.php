@@ -5,8 +5,10 @@ $lang_forum = array(
 
 'Post topic'	=>	'Post new topic',
 'Views'			=>	'Views',
-'Moved'			=>	'Moved',
-'Sticky'		=>	'Sticky',
-'Empty forum'	=>	'Forum is empty.'
+'Moved'			=>	'Moved:',
+'Sticky'		=>	'Sticky:',
+'Closed'		=>	'Closed:',
+'Empty forum'	=>	'Forum is empty.',
+'Mod controls'	=>	'Moderator controls'
 
 );

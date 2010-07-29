@@ -1,27 +1,10 @@
 <?php
-/***********************************************************************
 
-  Copyright (C) 2002-2005  Rickard Andersson (rickard@punbb.org)
-
-  This file is part of PunBB.
-
-  PunBB is free software; you can redistribute it and/or modify it
-  under the terms of the GNU General Public License as published
-  by the Free Software Foundation; either version 2 of the License,
-  or (at your option) any later version.
-
-  PunBB is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  MA  02111-1307  USA
-
-************************************************************************/
-
+/**
+ * Copyright (C) 2008-2010 FluxBB
+ * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
+ * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ */
 
 if (isset($_GET['action']))
 	define('PUN_QUIET_VISIT', 1);
@@ -38,18 +21,22 @@ $action = isset($_GET['action']) ? $_GET['action'] : null;
 
 if ($action == 'rules')
 {
+	if ($pun_config['o_rules'] == '0' || ($pun_user['is_guest'] && $pun_user['g_read_board'] == '0' && $pun_config['o_regs_allow'] == '0'))
+		message($lang_common['Bad request']);
+
 	// Load the register.php language file
 	require PUN_ROOT.'lang/'.$pun_user['language'].'/register.php';
 
-	$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / '.$lang_register['Forum rules'];
+	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_register['Forum rules']);
+	define('PUN_ACTIVE_PAGE', 'rules');
 	require PUN_ROOT.'header.php';
 
 ?>
-<div class="block">
-	<h2><span><?php echo $lang_register['Forum rules'] ?></span></h2>
+<div id="rules" class="block">
+	<div class="hd"><h2><span><?php echo $lang_register['Forum rules'] ?></span></h2></div>
 	<div class="box">
-		<div class="inbox">
-			<p><?php echo $pun_config['o_rules_message'] ?></p>
+		<div id="rules-block" class="inbox">
+			<div class="usercontent"><?php echo $pun_config['o_rules_message'] ?></div>
 		</div>
 	</div>
 </div>
@@ -66,13 +53,34 @@ else if ($action == 'markread')
 
 	$db->query('UPDATE '.$db->prefix.'users SET last_visit='.$pun_user['logged'].' WHERE id='.$pun_user['id']) or error('Unable to update user last visit data', __FILE__, __LINE__, $db->error());
 
+	// Reset tracked topics
+	set_tracked_topics(null);
+
 	redirect('index.php', $lang_misc['Mark read redirect']);
+}
+
+
+// Mark the topics/posts in a forum as read?
+else if ($action == 'markforumread')
+{
+	if ($pun_user['is_guest'])
+		message($lang_common['No permission']);
+
+	$fid = isset($_GET['fid']) ? intval($_GET['fid']) : 0;
+	if ($fid < 1)
+		message($lang_common['Bad request']);
+
+	$tracked_topics = get_tracked_topics();
+	$tracked_topics['forums'][$fid] = time();
+	set_tracked_topics($tracked_topics);
+
+	redirect('viewforum.php?id='.$fid, $lang_misc['Mark forum read redirect']);
 }
 
 
 else if (isset($_GET['email']))
 {
-	if ($pun_user['is_guest'])
+	if ($pun_user['is_guest'] || $pun_user['g_send_email'] == '0')
 		message($lang_common['No permission']);
 
 	$recipient_id = intval($_GET['email']);
@@ -85,8 +93,8 @@ else if (isset($_GET['email']))
 
 	list($recipient, $recipient_email, $email_setting) = $db->fetch_row($result);
 
-	if ($email_setting == 2 && $pun_user['g_id'] > PUN_MOD)
-		message($lang_misc['Form e-mail disabled']);
+	if ($email_setting == 2 && !$pun_user['is_admmod'])
+		message($lang_misc['Form email disabled']);
 
 
 	if (isset($_POST['form_sent']))
@@ -96,19 +104,22 @@ else if (isset($_GET['email']))
 		$message = pun_trim($_POST['req_message']);
 
 		if ($subject == '')
-			message($lang_misc['No e-mail subject']);
+			message($lang_misc['No email subject']);
 		else if ($message == '')
-			message($lang_misc['No e-mail message']);
-		else if (strlen($message) > 65535)
-			message($lang_misc['Too long e-mail message']);
+			message($lang_misc['No email message']);
+		else if (pun_strlen($message) > PUN_MAX_POSTSIZE)
+			message($lang_misc['Too long email message']);
 
-		// Load the "form e-mail" template
+		if ($pun_user['last_email_sent'] != '' && (time() - $pun_user['last_email_sent']) < $pun_user['g_email_flood'] && (time() - $pun_user['last_email_sent']) >= 0)
+			message(sprintf($lang_misc['Email flood'], $pun_user['g_email_flood']));
+
+		// Load the "form email" template
 		$mail_tpl = trim(file_get_contents(PUN_ROOT.'lang/'.$pun_user['language'].'/mail_templates/form_email.tpl'));
 
 		// The first row contains the subject
 		$first_crlf = strpos($mail_tpl, "\n");
-		$mail_subject = trim(substr($mail_tpl, 8, $first_crlf-8));
-		$mail_message = trim(substr($mail_tpl, $first_crlf));
+		$mail_subject = pun_trim(substr($mail_tpl, 8, $first_crlf-8));
+		$mail_message = pun_trim(substr($mail_tpl, $first_crlf));
 
 		$mail_subject = str_replace('<mail_subject>', $subject, $mail_subject);
 		$mail_message = str_replace('<sender>', $pun_user['username'], $mail_message);
@@ -118,40 +129,43 @@ else if (isset($_GET['email']))
 
 		require_once PUN_ROOT.'include/email.php';
 
-		pun_mail($recipient_email, $mail_subject, $mail_message, '"'.str_replace('"', '', $pun_user['username']).'" <'.$pun_user['email'].'>');
+		pun_mail($recipient_email, $mail_subject, $mail_message, $pun_user['email'], $pun_user['username']);
 
-		redirect(htmlspecialchars($_POST['redirect_url']), $lang_misc['E-mail sent redirect']);
+		$db->query('UPDATE '.$db->prefix.'users SET last_email_sent='.time().' WHERE id='.$pun_user['id']) or error('Unable to update user', __FILE__, __LINE__, $db->error());
+
+		redirect(htmlspecialchars($_POST['redirect_url']), $lang_misc['Email sent redirect']);
 	}
 
 
-	// Try to determine if the data in HTTP_REFERER is valid (if not, we redirect to the users profile after the e-mail is sent)
+	// Try to determine if the data in HTTP_REFERER is valid (if not, we redirect to the users profile after the email is sent)
 	$redirect_url = (isset($_SERVER['HTTP_REFERER']) && preg_match('#^'.preg_quote($pun_config['o_base_url']).'/(.*?)\.php#i', $_SERVER['HTTP_REFERER'])) ? htmlspecialchars($_SERVER['HTTP_REFERER']) : 'index.php';
 
-	$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / '.$lang_misc['Send e-mail to'].' '.pun_htmlspecialchars($recipient);
-	$required_fields = array('req_subject' => $lang_misc['E-mail subject'], 'req_message' => $lang_misc['E-mail message']);
+	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_misc['Send email to'].' '.pun_htmlspecialchars($recipient));
+	$required_fields = array('req_subject' => $lang_misc['Email subject'], 'req_message' => $lang_misc['Email message']);
 	$focus_element = array('email', 'req_subject');
+	define('PUN_ACTIVE_PAGE', 'index');
 	require PUN_ROOT.'header.php';
 
 ?>
-<div class="blockform">
-	<h2><span><?php echo $lang_misc['Send e-mail to'] ?> <?php echo pun_htmlspecialchars($recipient) ?></span></h2>
+<div id="emailform" class="blockform">
+	<h2><span><?php echo $lang_misc['Send email to'] ?> <?php echo pun_htmlspecialchars($recipient) ?></span></h2>
 	<div class="box">
 		<form id="email" method="post" action="misc.php?email=<?php echo $recipient_id ?>" onsubmit="this.submit.disabled=true;if(process_form(this)){return true;}else{this.submit.disabled=false;return false;}">
 			<div class="inform">
 				<fieldset>
-					<legend><?php echo $lang_misc['Write e-mail'] ?></legend>
+					<legend><?php echo $lang_misc['Write email'] ?></legend>
 					<div class="infldset txtarea">
 						<input type="hidden" name="form_sent" value="1" />
 						<input type="hidden" name="redirect_url" value="<?php echo $redirect_url ?>" />
-						<label><strong><?php echo $lang_misc['E-mail subject'] ?></strong><br />
+						<label class="required"><strong><?php echo $lang_misc['Email subject'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br />
 						<input class="longinput" type="text" name="req_subject" size="75" maxlength="70" tabindex="1" /><br /></label>
-						<label><strong><?php echo $lang_misc['E-mail message'] ?></strong><br />
+						<label class="required"><strong><?php echo $lang_misc['Email message'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br />
 						<textarea name="req_message" rows="10" cols="75" tabindex="2"></textarea><br /></label>
-						<p><?php echo $lang_misc['E-mail disclosure note'] ?></p>
+						<p><?php echo $lang_misc['Email disclosure note'] ?></p>
 					</div>
 				</fieldset>
 			</div>
-			<p><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="3" accesskey="s" /><a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="3" accesskey="s" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>
 </div>
@@ -177,6 +191,9 @@ else if (isset($_GET['report']))
 		if ($reason == '')
 			message($lang_misc['No reason']);
 
+		if ($pun_user['last_email_sent'] != '' && (time() - $pun_user['last_email_sent']) < $pun_user['g_email_flood'] && (time() - $pun_user['last_email_sent']) >= 0)
+			message(sprintf($lang_misc['Report flood'], $pun_user['g_email_flood']));
+
 		// Get the topic ID
 		$result = $db->query('SELECT topic_id FROM '.$db->prefix.'posts WHERE id='.$post_id) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
 		if (!$db->num_rows($result))
@@ -192,17 +209,19 @@ else if (isset($_GET['report']))
 		list($subject, $forum_id) = $db->fetch_row($result);
 
 		// Should we use the internal report handling?
-		if ($pun_config['o_report_method'] == 0 || $pun_config['o_report_method'] == 2)
+		if ($pun_config['o_report_method'] == '0' || $pun_config['o_report_method'] == '2')
 			$db->query('INSERT INTO '.$db->prefix.'reports (post_id, topic_id, forum_id, reported_by, created, message) VALUES('.$post_id.', '.$topic_id.', '.$forum_id.', '.$pun_user['id'].', '.time().', \''.$db->escape($reason).'\')' ) or error('Unable to create report', __FILE__, __LINE__, $db->error());
 
-		// Should we e-mail the report?
-		if ($pun_config['o_report_method'] == 1 || $pun_config['o_report_method'] == 2)
+		// Should we email the report?
+		if ($pun_config['o_report_method'] == '1' || $pun_config['o_report_method'] == '2')
 		{
 			// We send it to the complete mailing-list in one swoop
 			if ($pun_config['o_mailing_list'] != '')
 			{
-				$mail_subject = 'Report('.$forum_id.') - \''.$subject.'\'';
-				$mail_message = 'User \''.$pun_user['username'].'\' has reported the following message:'."\n".$pun_config['o_base_url'].'/viewtopic.php?pid='.$post_id.'#p'.$post_id."\n\n".'Reason:'."\n".$reason;
+				$mail_subject = sprintf($lang_common['Report notification'], $forum_id, $subject);
+				$mail_message = sprintf($lang_common['Report message 1'], $pun_user['username'], $pun_config['o_base_url'].'/viewtopic.php?pid='.$post_id.'#p'.$post_id)."\n";
+				$mail_message .= sprintf($lang_common['Report message 2'], $reason)."\n";
+				$mail_message .= "\n".'--'."\n".$lang_common['Email signature'];
 
 				require PUN_ROOT.'include/email.php';
 
@@ -210,17 +229,40 @@ else if (isset($_GET['report']))
 			}
 		}
 
+		$db->query('UPDATE '.$db->prefix.'users SET last_email_sent='.time().' WHERE id='.$pun_user['id']) or error('Unable to update user', __FILE__, __LINE__, $db->error());
+
 		redirect('viewtopic.php?pid='.$post_id.'#p'.$post_id, $lang_misc['Report redirect']);
 	}
 
+	// Fetch some info about the post, the topic and the forum
+	$result = $db->query('SELECT f.id AS fid, f.forum_name, t.id AS tid, t.subject FROM '.$db->prefix.'posts AS p INNER JOIN '.$db->prefix.'topics AS t ON t.id=p.topic_id INNER JOIN '.$db->prefix.'forums AS f ON f.id=t.forum_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.id='.$post_id) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
+	if (!$db->num_rows($result))
+		message($lang_common['Bad request']);
 
-	$page_title = pun_htmlspecialchars($pun_config['o_board_title']).' / '.$lang_misc['Report post'];
+	$cur_post = $db->fetch_assoc($result);
+
+	if ($pun_config['o_censoring'] == '1')
+		$cur_post['subject'] = censor_words($cur_post['subject']);
+
+	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_misc['Report post']);
 	$required_fields = array('req_reason' => $lang_misc['Reason']);
 	$focus_element = array('report', 'req_reason');
+	define('PUN_ACTIVE_PAGE', 'index');
 	require PUN_ROOT.'header.php';
 
 ?>
-<div class="blockform">
+<div class="linkst">
+	<div class="inbox">
+		<ul class="crumbs">
+			<li><a href="index.php"><?php echo $lang_common['Index'] ?></a></li>
+			<li><span>»&#160;</span><a href="viewforum.php?id=<?php echo $cur_post['fid'] ?>"><?php echo pun_htmlspecialchars($cur_post['forum_name']) ?></a></li>
+			<li><span>»&#160;</span><a href="viewtopic.php?pid=<?php echo $post_id ?>#p<?php echo $post_id ?>"><?php echo pun_htmlspecialchars($cur_post['subject']) ?></a></li>
+			<li><span>»&#160;</span><strong><?php echo $lang_misc['Report post'] ?></strong></li>
+		</ul>
+	</div>
+</div>
+
+<div id="reportform" class="blockform">
 	<h2><span><?php echo $lang_misc['Report post'] ?></span></h2>
 	<div class="box">
 		<form id="report" method="post" action="misc.php?report=<?php echo $post_id ?>" onsubmit="this.submit.disabled=true;if(process_form(this)){return true;}else{this.submit.disabled=false;return false;}">
@@ -229,11 +271,11 @@ else if (isset($_GET['report']))
 					<legend><?php echo $lang_misc['Reason desc'] ?></legend>
 					<div class="infldset txtarea">
 						<input type="hidden" name="form_sent" value="1" />
-						<label><strong><?php echo $lang_misc['Reason'] ?></strong><br /><textarea name="req_reason" rows="5" cols="60"></textarea><br /></label>
+						<label class="required"><strong><?php echo $lang_misc['Reason'] ?> <span><?php echo $lang_common['Required'] ?></span></strong><br /><textarea name="req_reason" rows="5" cols="60"></textarea><br /></label>
 					</div>
 				</fieldset>
 			</div>
-			<p><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /><a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
+			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>
 </div>

@@ -6,6 +6,7 @@ $lang_search = array(
 // The search form
 'User search'				=>	'User search',
 'No search permission'		=>	'You do not have permission to use the search feature.',
+'Search flood'				=>	'At least %s seconds have to pass between searches. Please wait a while and try searching again.',
 'Search'					=>	'Search',
 'Search criteria legend'	=>	'Enter your search criteria',
 'Search info'				=>	'To search by keyword, enter a term or terms to search for. Separate terms with spaces. Use AND, OR and NOT to refine your search. To search by author enter the username of the author whose posts you wish to search for. Use wildcard character * for partial matches.',
@@ -42,6 +43,7 @@ $lang_search = array(
 'No new posts'				=>	'There are no topics with new posts since your last visit.',
 'No recent posts'			=>	'No new posts have been made within the last 24 hours.',
 'No unanswered'				=>	'There are no unanswered posts in this forum.',
-'Go to post'				=>	'Go to post'
+'Go to post'				=>	'Go to post',
+'Go to topic'				=>	'Go to topic'
 
 );
