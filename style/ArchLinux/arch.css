@@ -24,10 +24,6 @@ html, body, .pun { background: #f6f9fc; color: #222; }
 .pun .end-box { background: none; }
 .pun .end-box div { background: none; }
 
-/* hide user title */
-.pun .usertitle { visibility: hidden; }
-.pun .postleft dt:hover +.usertitle { visibility: visible; }
-
 /* hide moderator list */
 #brdmain .tcl .modlist { display: none; }
 
