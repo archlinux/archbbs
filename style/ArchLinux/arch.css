@@ -28,9 +28,6 @@ html, body, .pun { background: #f6f9fc; color: #222; }
 .pun .usertitle { visibility: hidden; }
 .pun .postleft dt:hover +.usertitle { visibility: visible; }
 
-/* Hide IP address */
-.pun .postleft dd span { display: none; }
-
 /* hide moderator list */
 #brdmain .tcl .modlist { display: none; }
 
