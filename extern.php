@@ -74,8 +74,21 @@ if ($pun_user['g_read_board'] == '0')
 	exit($lang_common['No view']);
 }
 
-$action = isset($_GET['action']) ? $_GET['action'] : 'feed';
+$action = isset($_GET['action']) ? strtolower($_GET['action']) : 'feed';
 
+// Handle a couple old formats, from FluxBB 1.2
+switch ($action)
+{
+	case 'active':
+		$action = 'feed';
+		$_GET['order'] = 'last_post';
+		break;
+
+	case 'new':
+		$action = 'feed';
+		$_GET['order'] = 'posted';
+		break;
+}
 
 //
 // Sends the proper headers for Basic HTTP Authentication
@@ -266,7 +279,9 @@ if ($action == 'feed')
 	require PUN_ROOT.'include/parser.php';
 
 	// Determine what type of feed to output
-	$type = isset($_GET['type']) && in_array($_GET['type'], array('html', 'rss', 'atom', 'xml')) ? $_GET['type'] : 'html';
+	$type = isset($_GET['type']) ? strtolower($_GET['type']) : 'html';
+	if (!in_array($type, array('html', 'rss', 'atom', 'xml')))
+		$type = 'html';
 
 	$show = isset($_GET['show']) ? intval($_GET['show']) : 15;
 	if ($show < 1 || $show > 50)
@@ -334,7 +349,7 @@ if ($action == 'feed')
 	}
 	else
 	{
-		$order_posted = isset($_GET['order']) && $_GET['order'] == 'posted';
+		$order_posted = isset($_GET['order']) && strtolower($_GET['order']) == 'posted';
 		$forum_name = '';
 		$forum_sql = '';
 
