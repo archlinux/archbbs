@@ -1,6 +1,6 @@
-* { font-family: sans-serif; }
+* { font-family: sans-serif !important; }
 #archnavbar.anb-forum ul li.anb-selected a { color: #fff !important; }
-.pun pre, .pun code { font-family: monospace; }
+.pun pre, .pun code { font-family: monospace !important; }
 html, body, .pun { background: #f6f9fc; color: #222; }
 .pun .punwrap {	border-color: #bcd; }
 
@@ -41,3 +41,6 @@ html, body, .pun { background: #f6f9fc; color: #222; }
 
 .pun .quotebox { border-color: #bcd; background: #f6f9fc; color: #444; }
 .pun .codebox { border-color: #bcd; background: #ebf1f5; color: #222; }
+
+/* hide border of images */
+.pun .postimg img { border: none; }
