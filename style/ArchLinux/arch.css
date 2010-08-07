@@ -36,7 +36,7 @@ html, body, .pun { background: #f6f9fc; color: #222; }
 .pun label, .pun legend, #adminconsole fieldset th { color: #444; }
 .pun #viewprofile dt, #adstats dt { color: #444; }
 
-.pun .icon { border-color: #e8ecf1; }
+.pun .icon { border-color: #e8ecf1; border-width: 6px; margin: 2px 0 0 2px; }
 .pun .inew .icon { border-color: #07b; }
 
 .pun .quotebox { border-color: #bcd; background: #f6f9fc; color: #444; }
