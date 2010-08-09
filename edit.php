@@ -72,8 +72,9 @@ if (isset($_POST['form_sent']))
 	// Clean up message from POST
 	$message = pun_linebreaks(pun_trim($_POST['req_message']));
 
-	if (pun_strlen($message) > PUN_MAX_POSTSIZE)
-		$errors[] = $lang_post['Too long message'];
+	// Here we use strlen() not pun_strlen() as we want to limit the post to PUN_MAX_POSTSIZE bytes, not characters
+	if (strlen($message) > PUN_MAX_POSTSIZE)
+		$errors[] = sprintf($lang_post['Too long message'], forum_number_format(PUN_MAX_POSTSIZE));
 	else if ($pun_config['p_message_all_caps'] == '0' && is_all_uppercase($message) && !$pun_user['is_admmod'])
 		$errors[] = $lang_post['All caps message'];
 
@@ -188,7 +189,7 @@ else if (isset($_POST['preview']))
 }
 
 ?>
-<div class="blockform">
+<div id="editform" class="blockform">
 	<h2><span><?php echo $lang_post['Edit post'] ?></span></h2>
 	<div class="box">
 		<form id="edit" method="post" action="edit.php?id=<?php echo $id ?>&amp;action=edit" onsubmit="return process_form(this)">

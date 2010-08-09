@@ -26,11 +26,11 @@ function check_cookie(&$pun_user)
 	$now = time();
 
 	// We assume it's a guest
-	$cookie = array('user_id' => 1, 'password_hash' => 'Guest');
+	$cookie = array('user_id' => 1, 'password_hash' => 'Guest', 'expiration_time' => 0);
 
 	// If a cookie is set, we get the user_id and password hash from it
-	if (isset($_COOKIE[$cookie_name]))
-		list($cookie['user_id'], $cookie['password_hash'], $cookie['expiration_time']) = @unserialize($_COOKIE[$cookie_name]);
+	if (isset($_COOKIE[$cookie_name]) && preg_match('/a:3:{i:0;s:\d+:"(\d+)";i:1;s:\d+:"([0-9a-f]+)";i:2;i:(\d+);}/', $_COOKIE[$cookie_name], $matches))
+		list(, $cookie['user_id'], $cookie['password_hash'], $cookie['expiration_time']) = $matches;
 
 	if ($cookie['user_id'] > 1)
 	{
@@ -771,7 +771,7 @@ function get_title($user)
 	}
 
 	// If not already loaded in a previous call, load the cached ranks
-	if ($pun_config['o_ranks'] == '1' && empty($pun_ranks))
+	if ($pun_config['o_ranks'] == '1' && !defined('PUN_RANKS_LOADED'))
 	{
 		if (file_exists(FORUM_CACHE_DIR.'cache_ranks.php'))
 			include FORUM_CACHE_DIR.'cache_ranks.php';
@@ -805,7 +805,7 @@ function get_title($user)
 		{
 			foreach ($pun_ranks as $cur_rank)
 			{
-				if (intval($user['num_posts']) >= $cur_rank['min_posts'])
+				if ($user['num_posts'] >= $cur_rank['min_posts'])
 					$user_title = pun_htmlspecialchars($cur_rank['rank']);
 			}
 		}
