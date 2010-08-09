@@ -69,9 +69,6 @@ $lang_profile = array(
 
 // Profilanzeige
 'Users profile'					=>	'%s\'s Profil',
-'Unknown'						=>	'(Unbekannt)', // Dies wird angezeigt, wenn das Mitglied ein Profilfeld nicht ausgefüllt hat (z.Bsp. Wohnort)
-'Private'						=>	'(Privat)',	// Dies wird angezeigt, wenn das Mitglied keine E-Mails bekommen möchte
-'No avatar'						=>	'(Kein Avatar)',
 'Username info'					=>	'Username: %s',
 'Email info'					=>	'E-Mail: %s',
 'Posts info'					=>	'Beiträge: %s',
