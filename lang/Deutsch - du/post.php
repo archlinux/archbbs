@@ -7,7 +7,7 @@ $lang_post = array(
 'No subject'		=>	'Themen müssen einen Titel haben.',
 'Too long subject'	=>	'Der Betreff darf nicht länger als 70 Zeichen sein.',
 'No message'		=>	'Du musst einen Beitrag eingeben.',
-'Too long message'	=>	'Beiträge dürfen nicht länger als 65535 Zeichen (64 KB) sein.',
+'Too long message'	=>	'Beiträge dürfen nicht größer als %s Byte sein.',
 'All caps subject'	=>	'Der Betreff darf nicht nur Großbuchstaben enthalten.',
 'All caps message'	=>	'Der Beitrag darf nicht nur Großbuchstaben enthalten.',
 

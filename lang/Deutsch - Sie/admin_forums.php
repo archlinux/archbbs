@@ -10,6 +10,7 @@ $lang_admin_forums = array(
 'Perms reverted redirect'	=>	'Die Berechtigungen wurden auf die programmseitigen Voreinstellungen zurückgesetzt. Leite weiter …',
 'Must enter name message'	=>	'Sie müssen einen Namen für das Forum eingeben.',
 'Must be integer message'	=>	'Das Feld Position muss einen positiven Ganzzahlwert enthalten.',
+'New forum'					=>	'Neues Forum',
 
 // Eingangsseite
 'Add forum head'			=>	'Ein Forum hinzufügen',
