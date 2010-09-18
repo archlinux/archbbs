@@ -31,10 +31,8 @@ $lang_prof_reg = array(
 'Pass not match'			=>	'Die Passwörter stimmen nicht überein. Bitte gehen Sie zurück und korrigieren diese.',
 'Banned email'				=>	'Die eingegebene E-Mail-Adresse ist in diesem Forum gebannt, bitte geben Sie eine andere E-Mail-Adresse an.',
 'Dupe email'				=>	'Diese E-Mail-Adresse ist bereits vergeben, bitte geben Sie eine andere E-Mail-Adresse an.',
-'Sig too long'				=>	'Signaturen können nicht länger als',
-'characters'				=>	'Zeichen sein',
-'Sig too many lines'		=>	'Signaturen dürfen nicht mehr als',
-'lines'						=>	'Zeilen haben.',
+'Sig too long'				=>	'Signaturen dürfen nicht länger als %1$s Zeichen sein. Bitte kürzen Sie die Signatur um %2$s Zeichen.',
+'Sig too many lines'		=>	'Signaturen dürfen nicht mehr als %s Zeilen haben.',
 'Bad ICQ'					=>	'Die angegebene ICQ Nummer ist ungültig, bitte gehen Sie zurück und korrigieren Sie es.',
 
 'UTC-12:00'					=>	'(WEZ-12:00) Internationale Datumsgrenze West',

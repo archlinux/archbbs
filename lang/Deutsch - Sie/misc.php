@@ -21,6 +21,7 @@ $lang_misc = array(
 
 // Bericht
 'No reason'						=>	'Sie müssen einen Grund angeben.',
+'Reason too long'				=>	'Ihre Nachricht ist zu lang.',
 'Report flood'					=>	'Zwischen zwei Meldungen müssen mindestens %s Sekunden vergangen sein. Bitte warten Sie etwas und versuchen es später noch einmal.',
 'Report redirect'				=>	'Beitrag gemeldet. Leite weiter …',
 'Report post'					=>	'Beitrag melden',

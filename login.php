@@ -11,7 +11,6 @@ if (isset($_GET['action']))
 
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
-require PUN_ROOT.'include/funnydot.php';
 
 
 // Load the login.php language file
@@ -61,7 +60,6 @@ if (isset($_POST['form_sent']) && $action == 'in')
 			$authorized = ($cur_user['password'] == $form_password_hash);
 	}
 
-	check_funnydot() || message('Please type in the correct code!');
 	if (!$authorized)
 		message($lang_login['Wrong user/pass'].' <a href="login.php?action=forget">'.$lang_login['Forgotten pass'].'</a>');
 
@@ -112,7 +110,6 @@ else if ($action == 'forget' || $action == 'forget_2')
 	{
 		// Start with a clean slate
 		$errors = array();
-		check_funnydot() || $errors[] = 'Please type in the correct code!';
 
 		require PUN_ROOT.'include/email.php';
 
@@ -212,7 +209,6 @@ if (!empty($errors))
 					</div>
 				</fieldset>
 			</div>
-			<?php echo get_funnydot(); ?>
 			<p class="buttons"><input type="submit" name="request_pass" value="<?php echo $lang_common['Submit'] ?>" /><?php if (empty($errors)): ?> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a><?php endif; ?></p>
 		</form>
 	</div>
@@ -258,7 +254,6 @@ require PUN_ROOT.'header.php';
 					</div>
 				</fieldset>
 			</div>
-			<?php echo get_funnydot(); ?>
 			<p class="buttons"><input type="submit" name="login" value="<?php echo $lang_common['Login'] ?>" tabindex="3" /></p>
 		</form>
 	</div>
