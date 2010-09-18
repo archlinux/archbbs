@@ -8,6 +8,7 @@
 
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
+require PUN_ROOT.'include/funnyquestion.php';
 
 
 if ($pun_user['g_read_board'] == '0')
@@ -59,6 +60,7 @@ $errors = array();
 // Did someone just hit "Submit" or "Preview"?
 if (isset($_POST['form_sent']))
 {
+	check_funnyquestion() || $errors[] = $lang_funnyquestion['wrong-answer'];
 	// Make sure form_user is correct
 	if (($pun_user['is_guest'] && $_POST['form_user'] != 'Guest') || (!$pun_user['is_guest'] && $_POST['form_user'] != $pun_user['username']))
 		message($lang_common['Bad request']);
@@ -554,6 +556,7 @@ if (!empty($checkboxes))
 
 ?>
 			</div>
+			<?php echo get_funnyquestion(); ?>
 			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>

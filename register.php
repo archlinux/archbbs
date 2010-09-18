@@ -8,6 +8,7 @@
 
 define('PUN_ROOT', './');
 require PUN_ROOT.'include/common.php';
+require PUN_ROOT.'include/funnyquestion.php';
 
 
 // If we are logged in, we shouldn't be here
@@ -65,6 +66,7 @@ $errors = array();
 
 if (isset($_POST['form_sent']))
 {
+	check_funnyquestion() || $errors[] = $lang_funnyquestion['wrong-answer'];
 	// Check that someone from this IP didn't register a user within the last hour (DoS prevention)
 	$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.get_remote_address().'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
@@ -402,6 +404,7 @@ if (!empty($errors))
 					</div>
 				</fieldset>
 			</div>
+			<?php echo get_funnyquestion(); ?>
 			<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
 		</form>
 	</div>
