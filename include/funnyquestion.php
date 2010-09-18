@@ -8,6 +8,7 @@ if (!defined('PUN'))
 	'What is the Ultimate Answer to the Ultimate Question of Life, The Universe, and Everything?' => '42'
 );
 !isset($funnyquestion_timeout) && $funnyquestion_timeout = 3600;
+!isset($funnyquestion_remember) && $funnyquestion_remember = 3600*24;
 !isset($funnyquestion_wait) && $funnyquestion_wait = 2;
 
 if (file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/funnyquestion.php')) {
@@ -21,16 +22,34 @@ function normalize_funnyanswer($answer)
 	return preg_replace('/[^a-z0-9]/', '', strtolower($answer));
 }
 
+function set_funnycookie()
+{
+	global $funnyquestion_hash, $funnyquestion_remember;
+
+	$time = time();
+	forum_setcookie('funnyquestion_hash', sha1($time.get_remote_address().$funnyquestion_hash), $time+$funnyquestion_remember);
+	forum_setcookie('funnyquestion_time', $time, $time+$funnyquestion_remember);
+}
+
+function has_funnycookie()
+{
+	global $funnyquestion_hash, $funnyquestion_remember;
+
+	return (!empty($_COOKIE['funnyquestion_hash']) && !empty($_COOKIE['funnyquestion_time'])
+		&& time() - $funnyquestion_remember <= $_COOKIE['funnyquestion_time']
+		&& sha1($_COOKIE['funnyquestion_time'].get_remote_address().$funnyquestion_hash) == $_COOKIE['funnyquestion_hash']);
+}
+
 function get_funnyquestion()
 {
-	global $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $pun_user;
+	global $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $pun_user, $funnyquestion_remember;
 
-	if (!$pun_user['is_guest']) {
+	if (!$pun_user['is_guest'] || has_funnycookie()) {
 		return '';
 	}
 
-	$question = array_rand($funny_questions);
 	$time = time();
+	$question = array_rand($funny_questions);
 	# make sure the user is not able to tell us the question to answer
 	$hash = sha1($time.$question.$funnyquestion_hash);
 
@@ -51,9 +70,9 @@ function get_funnyquestion()
 
 function check_funnyquestion()
 {
-	global $funnyquestion_hash, $funnyquestion_timeout, $funnyquestion_wait, $funny_questions, $pun_user;
+	global $funnyquestion_hash, $funnyquestion_timeout, $funnyquestion_wait, $funny_questions, $pun_user, $funnyquestion_remember;
 
-	if (!$pun_user['is_guest']) {
+	if (!$pun_user['is_guest'] || has_funnycookie()) {
 		return true;
 	}
 
@@ -81,6 +100,7 @@ function check_funnyquestion()
 		foreach ($answers as $answer) {
 			if (normalize_funnyanswer($answer) == $user_answer
 				&& $hash == sha1($time.$question.$funnyquestion_hash)) {
+				set_funnycookie();
 				return true;
 			}
 		}
