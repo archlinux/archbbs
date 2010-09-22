@@ -4,9 +4,9 @@
 if (!defined('PUN'))
 	exit;
 
-$max_age = 60*60*24*30;
+$max_age = 60*60*24*30*3;
 $min_age = 60*60*24;
-$max_active = 60*60*24;
+$max_active = 60*60*24*30;
 $limit = 100;
 
 // Tell admin_loader.php that this is indeed a plugin and that it is loaded
@@ -78,7 +78,7 @@ if (isset($_POST['delete-users']) && is_array($_POST['delete-users']))
 						</tr>
 						<tr>
 							<td>Active for less than:</td>
-							<td><?php echo round(($max_active / (60 * 60))); ?> h</td>
+							<td><?php echo round(($max_active / (60 * 60 * 24))); ?> d</td>
 						</tr>
 						<tr>
 							<td>Limited to:</td>
