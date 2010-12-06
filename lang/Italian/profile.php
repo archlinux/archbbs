@@ -33,13 +33,13 @@ $lang_profile = array(
 'Pass info'						=>	'Le password dovrebbero essere lunghe almeno 4 caratteri. Le password sono case sensitive.',
 
 // Email stuff
-'E-mail key bad'			=>	'La chiave di attivazione dell\'email non è corretto. Per favore richiedi il cambio dell\'indirizzo email. Se non è possibile contatta l\'amministratore del forum a',
-'E-mail updated'			=>	'Il tuo indirizzo email è stato aggiornato.',
-'Activate e-mail sent'		=>	'Una email è state inviata all\'indirizzo specificato con le istruzioni su come attivare il nuovo indirizzo email. Se non ti arriva puoi contattare l\'amministratore del forum a',
-'E-mail legend'				=>	'Inserisci il tuo nuovo indirizzo email',
-'E-mail instructions'		=>	'Una email ti sarà inviata al tuo nuovo indirizzo email con il link per l\'attivazione. Clicca sul link che ricevi per email per attivare il nuovo indirizzo.',
-'Change e-mail'				=>	'Cambia indirizzo email',
-'New e-mail'				=>	'Nuova email',
+'Email key bad'			=>	'La chiave di attivazione dell\'email non è corretto. Per favore richiedi il cambio dell\'indirizzo email. Se non è possibile contatta l\'amministratore del forum a',
+'Email updated'			=>	'Il tuo indirizzo email è stato aggiornato.',
+'Activate email sent'		=>	'Una email è state inviata all\'indirizzo specificato con le istruzioni su come attivare il nuovo indirizzo email. Se non ti arriva puoi contattare l\'amministratore del forum a',
+'Email legend'				=>	'Inserisci il tuo nuovo indirizzo email',
+'Email instructions'		=>	'Una email ti sarà inviata al tuo nuovo indirizzo email con il link per l\'attivazione. Clicca sul link che ricevi per email per attivare il nuovo indirizzo.',
+'Change email'				=>	'Cambia indirizzo email',
+'New email'				=>	'Nuova email',
 
 // Avatar upload stuff
 'Avatars disabled'			=>	'L\'amministratore ha disattivato il supporto per gli avatar.',

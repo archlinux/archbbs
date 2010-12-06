@@ -3,12 +3,12 @@
 // Language definitions used in both profile.php and register.php
 $lang_prof_reg = array(
 
-'E-mail legend'				=>	'Inserisci un indirizzo email valido',
-'E-mail legend 2'			=>	'Inserisci e conferma un indirizzo email valido',
+'Email legend'				=>	'Inserisci un indirizzo email valido',
+'Email legend 2'			=>	'Inserisci e conferma un indirizzo email valido',
 'Localisation legend'		=>	'Imposta le tue opzioni di localizzazione',
 'Time zone'					=>	'Fuso orario',
 'Time zone info'				=>	'Devi scegliere il tuo fuso orario in modo da visualizzare correttamente gli orari nel forum.',
-'DST'						=>	'L\'ora solare è attiva (l\'orario è aumentato di un\'ora).',
+'DST'						=>	'Utilizza l\'ora solare (incrementa l\'orario di un\'ora).',
 'Time format'				=>	'Formato dell\'ora',
 'Date format'				=>	'Formato della data',
 'Default'					=>	'Default',
