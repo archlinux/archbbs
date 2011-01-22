@@ -74,7 +74,7 @@
 	font: 68.75%/1.4545em Verdana, Helvetica, Arial, sans-serif;
 	}
 
-.pun table, .pun td, .pun th, .pun input, .pun select, .pun optgroup, .pun textarea, .pun samp {
+.pun table, .pun td, .pun th, .pun input, .pun select, .pun optgroup, .pun textarea, .pun samp, .pun legend {
 	font-size: 1em;
 	font-family: verdana, helvetica, arial, sans-serif;
 	}
@@ -714,6 +714,12 @@
 	margin-left: 1em
 	}
 
+#adintro ul {
+	list-style-type: disc;
+	margin-left: 8px;
+	padding-left: 16px;
+	}
+
 /*****************************************************************
 8. MAIN POSTS
 *****************************************************************/
@@ -793,6 +799,7 @@
 	width:98%;
 	overflow: hidden;
 	padding-bottom: 6px;
+	word-wrap: break-word;
 	}
 
 .pun .postfootright ul, .pun .postfootright div, .pun .postfootright p,
@@ -877,6 +884,7 @@
 .pun .postmsg .postimg img {
 	max-width: 98%;
 	vertical-align: middle;
+	margin: 7px 0.5em 7px 0;
 }
 
 .pun .postmsg .postimg a:link img, .pun .postmsg .postimg a:visited img {

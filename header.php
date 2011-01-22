@@ -104,33 +104,34 @@ if (isset($required_fields))
 /* <![CDATA[ */
 function process_form(the_form)
 {
-	var element_names = new Object()
+	var element_names = {
 <?php
-
-	// Output a JavaScript array with localised field names
+	// Output a JavaScript object with localised field names
+	$tpl_temp = count($required_fields);
 	foreach ($required_fields as $elem_orig => $elem_trans)
-		echo "\t".'element_names["'.$elem_orig.'"] = "'.addslashes(str_replace('&#160;', ' ', $elem_trans)).'"'."\n";
-
+	{
+		echo "\t\t\"".$elem_orig.'": "'.addslashes(str_replace('&#160;', ' ', $elem_trans));
+		if (--$tpl_temp) echo "\",\n";
+		else echo "\"\n\t};\n";
+	}
 ?>
-
 	if (document.all || document.getElementById)
 	{
 		for (var i = 0; i < the_form.length; ++i)
 		{
-			var elem = the_form.elements[i]
-			if (elem.name && elem.name.substring(0, 4) == "req_")
+			var elem = the_form.elements[i];
+			if (elem.name && (/^req_/.test(elem.name)))
 			{
-				if (elem.type && (elem.type=="text" || elem.type=="textarea" || elem.type=="password" || elem.type=="file") && elem.value=='')
+				if (!elem.value && elem.type && (/^(?:text(?:area)?|password|file)$/i.test(elem.type)))
 				{
-					alert("\"" + element_names[elem.name] + "\" <?php echo $lang_common['required field'] ?>")
-					elem.focus()
-					return false
+					alert('"' + element_names[elem.name] + '" <?php echo $lang_common['required field'] ?>');
+					elem.focus();
+					return false;
 				}
 			}
 		}
 	}
-
-	return true
+	return true;
 }
 /* ]]> */
 </script>
@@ -153,8 +154,8 @@ ob_end_clean();
 // START SUBST - <body>
 if (isset($focus_element))
 {
-	$tpl_main = str_replace('<body onload="', '<body onload="document.getElementById(\''.$focus_element[0].'\').'.$focus_element[1].'.focus();', $tpl_main);
-	$tpl_main = str_replace('<body>', '<body onload="document.getElementById(\''.$focus_element[0].'\').'.$focus_element[1].'.focus()">', $tpl_main);
+	$tpl_main = str_replace('<body onload="', '<body onload="document.getElementById(\''.$focus_element[0].'\').elements[\''.$focus_element[1].'\'].focus();', $tpl_main);
+	$tpl_main = str_replace('<body>', '<body onload="document.getElementById(\''.$focus_element[0].'\').elements[\''.$focus_element[1].'\'].focus()">', $tpl_main);
 }
 // END SUBST - <body>
 
@@ -165,7 +166,7 @@ $tpl_main = str_replace('<pun_page>', htmlspecialchars(basename($_SERVER['PHP_SE
 
 
 // START SUBST - <pun_title>
-$tpl_main = str_replace('<pun_title>', '<h1><span>'.pun_htmlspecialchars($pun_config['o_board_title']).'</span></h1>', $tpl_main);
+$tpl_main = str_replace('<pun_title>', '<h1><a href="index.php">'.pun_htmlspecialchars($pun_config['o_board_title']).'</a></h1>', $tpl_main);
 // END SUBST - <pun_title>
 
 
@@ -180,11 +181,14 @@ $tpl_main = str_replace('<pun_navlinks>','<div id="brdmenu" class="inbox">'."\n\
 
 
 // START SUBST - <pun_status>
+$page_statusinfo = $page_quicklinks = array();
+
 if ($pun_user['is_guest'])
-	$tpl_temp = '<div id="brdwelcome" class="inbox">'."\n\t\t\t".'<p>'.$lang_common['Not logged in'].'</p>'."\n\t\t".'</div>';
+	$page_statusinfo = '<p>'.$lang_common['Not logged in'].'</p>';
 else
 {
-	$tpl_temp = '<div id="brdwelcome" class="inbox">'."\n\t\t\t".'<ul class="conl">'."\n\t\t\t\t".'<li><span>'.$lang_common['Logged in as'].' <strong>'.pun_htmlspecialchars($pun_user['username']).'</strong></span></li>'."\n\t\t\t\t".'<li><span>'.sprintf($lang_common['Last visit'], format_time($pun_user['last_visit'])).'</span></li>';
+	$page_statusinfo[] = '<li><span>'.$lang_common['Logged in as'].' <strong>'.pun_htmlspecialchars($pun_user['username']).'</strong></span></li>';
+	$page_statusinfo[] = '<li><span>'.sprintf($lang_common['Last visit'], format_time($pun_user['last_visit'])).'</span></li>';
 
 	if ($pun_user['is_admmod'])
 	{
@@ -193,20 +197,51 @@ else
 			$result_header = $db->query('SELECT 1 FROM '.$db->prefix.'reports WHERE zapped IS NULL') or error('Unable to fetch reports info', __FILE__, __LINE__, $db->error());
 
 			if ($db->result($result_header))
-				$tpl_temp .= "\n\t\t\t\t".'<li class="reportlink"><span><strong><a href="admin_reports.php">'.$lang_common['New reports'].'</a></strong></span></li>';
+				$page_statusinfo[] = '<li class="reportlink"><span><strong><a href="admin_reports.php">'.$lang_common['New reports'].'</a></strong></span></li>';
 		}
 
 		if ($pun_config['o_maintenance'] == '1')
-			$tpl_temp .= "\n\t\t\t\t".'<li class="maintenancelink"><span><strong><a href="admin_options.php#maintenance">'.$lang_common['Maintenance mode enabled'].'</a></strong></span></li>';
+			$page_statusinfo[] = '<li class="maintenancelink"><span><strong><a href="admin_options.php#maintenance">'.$lang_common['Maintenance mode enabled'].'</a></strong></span></li>';
 	}
 
-	if (in_array(basename($_SERVER['PHP_SELF']), array('index.php', 'search.php')))
-		$tpl_temp .= "\n\t\t\t".'</ul>'."\n\t\t\t".'<ul class="conr">'.($pun_user['g_search'] == '1' ? "\n\t\t\t\t".'<li><span><a href="search.php?action=show_new">'.$lang_common['Show new posts'].'</a></span></li>' : '')."\n\t\t\t\t".'<li><span><a href="misc.php?action=markread">'.$lang_common['Mark all as read'].'</a></span></li>'."\n\t\t\t".'</ul>'."\n\t\t\t".'<div class="clearer"></div>'."\n\t\t".'</div>';
-	else if (basename($_SERVER['PHP_SELF']) == 'viewforum.php')
-		$tpl_temp .= "\n\t\t\t".'</ul>'."\n\t\t\t".'<ul class="conr">'."\n\t\t\t\t".'<li><span><a href="misc.php?action=markforumread&amp;fid='.$id.'">'.$lang_common['Mark forum read'].'</a></span></li>'."\n\t\t\t".'</ul>'."\n\t\t\t".'<div class="clearer"></div>'."\n\t\t".'</div>';
-	else
-		$tpl_temp .= "\n\t\t\t".'</ul>'."\n\t\t\t".'<div class="clearer"></div>'."\n\t\t".'</div>';
+	$script_name = basename($_SERVER['PHP_SELF']);
+	if ($script_name == 'index.php')
+		$page_quicklinks[] = '<a href="misc.php?action=markread">'.$lang_common['Mark all as read'].'</a>';
+
+	if ($pun_user['g_read_board'] == '1' && $pun_user['g_search'] == '1')
+		$page_quicklinks[] = '<a href="search.php?action=show_new" title="'.$lang_common['Show new posts'].'">'.$lang_common['New posts'].'</a>';
 }
+
+// Quick searches
+if ($pun_user['g_read_board'] == '1' && $pun_user['g_search'] == '1')
+{
+	$page_quicklinks[] = '<a href="search.php?action=show_recent" title="'.$lang_common['Show active topics'].'">'.$lang_common['Active topics'].'</a>';
+	$page_quicklinks[] = '<a href="search.php?action=show_unanswered" title="'.$lang_common['Show unanswered topics'].'">'.$lang_common['Unanswered topics'].'</a>';
+}
+
+
+// Generate all that jazz
+$tpl_temp = '<div id="brdwelcome" class="inbox">'."\n\t\t\t";
+
+// The status information
+if (is_array($page_statusinfo))
+{
+	$tpl_temp .= "\n\t\t\t".'<ul class="conl">';
+	$tpl_temp .= "\n\t\t\t\t".implode("\n\t\t\t\t", $page_statusinfo);
+	$tpl_temp .= "\n\t\t\t".'</ul>';
+}
+else
+	$tpl_temp .= "\n\t\t\t".$page_statusinfo;
+
+// Generate quicklinks
+if (count($page_quicklinks))
+{
+	$tpl_temp .= "\n\t\t\t".'<ul class="conr">';
+	$tpl_temp .= "\n\t\t\t\t".'<li><span>'.implode('</span></li>'."\n\t\t\t\t".'<li><span>', $page_quicklinks).'</span></li>';
+	$tpl_temp .= "\n\t\t\t".'</ul>'."\n\t\t\t".'<div class="clearer"></div>';
+}
+
+$tpl_temp .= "\n\t\t".'</div>';
 
 $tpl_main = str_replace('<pun_status>', $tpl_temp, $tpl_main);
 // END SUBST - <pun_status>

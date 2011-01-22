@@ -9,7 +9,7 @@
 // Tell header.php to use the admin template
 define('PUN_ADMIN_CONSOLE', 1);
 
-define('PUN_ROOT', './');
+define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
 require PUN_ROOT.'include/common_admin.php';
 
@@ -22,9 +22,7 @@ require PUN_ROOT.'lang/'.$admin_language.'/admin_options.php';
 
 if (isset($_POST['form_sent']))
 {
-	// Custom referrer check (so we can output a custom error message)
-	if (!preg_match('#^'.preg_quote(str_replace('www.', '', $pun_config['o_base_url']).'/admin_options.php', '#').'#i', str_replace('www.', '', (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : ''))))
-		message($lang_admin_options['Bad HTTP Referer message']);
+	confirm_referrer('admin_options.php', $lang_admin_options['Bad HTTP Referer message']);
 
 	$form = array(
 		'board_title'			=> pun_trim($_POST['form']['board_title']),
@@ -32,8 +30,8 @@ if (isset($_POST['form_sent']))
 		'base_url'				=> pun_trim($_POST['form']['base_url']),
 		'default_timezone'		=> floatval($_POST['form']['default_timezone']),
 		'default_dst'			=> $_POST['form']['default_dst'] != '1' ? '0' : '1',
-		'default_lang'			=> preg_replace('#[\.\\\/]#', '', pun_trim($_POST['form']['default_lang'])),
-		'default_style'			=> preg_replace('#[\.\\\/]#', '', pun_trim($_POST['form']['default_style'])),
+		'default_lang'			=> pun_trim($_POST['form']['default_lang']),
+		'default_style'			=> pun_trim($_POST['form']['default_style']),
 		'time_format'			=> pun_trim($_POST['form']['time_format']),
 		'date_format'			=> pun_trim($_POST['form']['date_format']),
 		'timeout_visit'			=> intval($_POST['form']['timeout_visit']),
@@ -71,10 +69,10 @@ if (isset($_POST['form_sent']))
 		'avatars_size'			=> intval($_POST['form']['avatars_size']),
 		'admin_email'			=> strtolower(pun_trim($_POST['form']['admin_email'])),
 		'webmaster_email'		=> strtolower(pun_trim($_POST['form']['webmaster_email'])),
-		'subscriptions'			=> $_POST['form']['subscriptions'] != '1' ? '0' : '1',
+		'forum_subscriptions'	=> $_POST['form']['forum_subscriptions'] != '1' ? '0' : '1',
+		'topic_subscriptions'	=> $_POST['form']['topic_subscriptions'] != '1' ? '0' : '1',
 		'smtp_host'				=> pun_trim($_POST['form']['smtp_host']),
 		'smtp_user'				=> pun_trim($_POST['form']['smtp_user']),
-		'smtp_pass'				=> pun_trim($_POST['form']['smtp_pass']),
 		'smtp_ssl'				=> $_POST['form']['smtp_ssl'] != '1' ? '0' : '1',
 		'regs_allow'			=> $_POST['form']['regs_allow'] != '1' ? '0' : '1',
 		'regs_verify'			=> $_POST['form']['regs_verify'] != '1' ? '0' : '1',
@@ -95,9 +93,12 @@ if (isset($_POST['form_sent']))
 	if (substr($form['base_url'], -1) == '/')
 		$form['base_url'] = substr($form['base_url'], 0, -1);
 
-	if (!file_exists(PUN_ROOT.'lang/'.$form['default_lang'].'/common.php'))
+	$languages = forum_list_langs();
+	if (!in_array($form['default_lang'], $languages))
 		message($lang_common['Bad request']);
-	if (!file_exists(PUN_ROOT.'style/'.$form['default_style'].'.css'))
+
+	$styles = forum_list_styles();
+	if (!in_array($form['default_style'], $styles))
 		message($lang_common['Bad request']);
 
 	if ($form['time_format'] == '')
@@ -124,6 +125,18 @@ if (isset($_POST['form_sent']))
 
 	if ($form['additional_navlinks'] != '')
 		$form['additional_navlinks'] = pun_trim(pun_linebreaks($form['additional_navlinks']));
+
+	// Change or enter a SMTP password
+	if (isset($_POST['form']['smtp_change_pass']))
+	{
+		$smtp_pass1 = isset($_POST['form']['smtp_pass1']) ? pun_trim($_POST['form']['smtp_pass1']) : '';
+		$smtp_pass2 = isset($_POST['form']['smtp_pass2']) ? pun_trim($_POST['form']['smtp_pass2']) : '';
+
+		if ($smtp_pass1 == $smtp_pass2)
+			$form['smtp_pass'] = $smtp_pass1;
+		else
+			message($lang_admin_options['SMTP passwords did not match']);
+	}
 
 	if ($form['announcement_message'] != '')
 		$form['announcement_message'] = pun_linebreaks($form['announcement_message']);
@@ -230,7 +243,7 @@ generate_admin_menu('options');
 								<tr>
 									<th scope="row"><?php echo $lang_admin_options['Base URL label'] ?></th>
 									<td>
-										<input type="text" name="form[base_url]" size="50" maxlength="100" value="<?php echo $pun_config['o_base_url'] ?>" />
+										<input type="text" name="form[base_url]" size="50" maxlength="100" value="<?php echo pun_htmlspecialchars($pun_config['o_base_url']) ?>" />
 										<span><?php echo $lang_admin_options['Base URL help'] ?></span>
 									</td>
 								</tr>
@@ -651,10 +664,17 @@ generate_admin_menu('options');
 									</td>
 								</tr>
 								<tr>
-									<th scope="row"><?php echo $lang_admin_options['Subscriptions label'] ?></th>
+									<th scope="row"><?php echo $lang_admin_options['Forum subscriptions label'] ?></th>
 									<td>
-										<input type="radio" name="form[subscriptions]" value="1"<?php if ($pun_config['o_subscriptions'] == '1') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['Yes'] ?></strong>&#160;&#160;&#160;<input type="radio" name="form[subscriptions]" value="0"<?php if ($pun_config['o_subscriptions'] == '0') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['No'] ?></strong>
-										<span><?php echo $lang_admin_options['Subscriptions help'] ?></span>
+										<input type="radio" name="form[forum_subscriptions]" value="1"<?php if ($pun_config['o_forum_subscriptions'] == '1') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['Yes'] ?></strong>&#160;&#160;&#160;<input type="radio" name="form[forum_subscriptions]" value="0"<?php if ($pun_config['o_forum_subscriptions'] == '0') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['No'] ?></strong>
+										<span><?php echo $lang_admin_options['Forum subscriptions help'] ?></span>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><?php echo $lang_admin_options['Topic subscriptions label'] ?></th>
+									<td>
+										<input type="radio" name="form[topic_subscriptions]" value="1"<?php if ($pun_config['o_topic_subscriptions'] == '1') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['Yes'] ?></strong>&#160;&#160;&#160;<input type="radio" name="form[topic_subscriptions]" value="0"<?php if ($pun_config['o_topic_subscriptions'] == '0') echo ' checked="checked"' ?> />&#160;<strong><?php echo $lang_admin_common['No'] ?></strong>
+										<span><?php echo $lang_admin_options['Topic subscriptions help'] ?></span>
 									</td>
 								</tr>
 								<tr>
@@ -674,7 +694,10 @@ generate_admin_menu('options');
 								<tr>
 									<th scope="row"><?php echo $lang_admin_options['SMTP password label'] ?></th>
 									<td>
-										<input type="text" name="form[smtp_pass]" size="25" maxlength="50" value="<?php echo pun_htmlspecialchars($pun_config['o_smtp_pass']) ?>" />
+										<span><input type="checkbox" name="form[smtp_change_pass]" value="1" />&#160;&#160;<?php echo $lang_admin_options['SMTP change password help'] ?></span>
+<?php $smtp_pass = !empty($pun_config['o_smtp_pass']) ? random_key(pun_strlen($pun_config['o_smtp_pass']), true) : ''; ?>
+										<input type="password" name="form[smtp_pass1]" size="25" maxlength="50" value="<?php echo $smtp_pass ?>" />
+										<input type="password" name="form[smtp_pass2]" size="25" maxlength="50" value="<?php echo $smtp_pass ?>" />
 										<span><?php echo $lang_admin_options['SMTP password help'] ?></span>
 									</td>
 								</tr>

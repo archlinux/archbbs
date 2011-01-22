@@ -1,13 +1,15 @@
 <?php
 
-// Language definitions used in viewtopic.php
+// Definizioni di lingua usate in viewtopic.php
+/* Traduzione di: Oscon.it */
+
 $lang_topic = array(
 
 'Post reply'		=>	'Rispondi',
 'Topic closed'		=>	'Discussione chiusa',
-'From'				=>	'Da',				// User location
+'From'				=>	'Da',				// Provenienza dell'utente
 'IP address logged'	=>	'Indirizzo IP registrato',
-'Note'				=>	'Nota',				// Admin note
+'Note'				=>	'Nota',				// Nota dell'amministratore
 'Posts'				=>	'Messaggi:',
 'Registered'		=>	'Registrato:',
 'Replies'			=>	'Risposte:',
@@ -20,12 +22,13 @@ $lang_topic = array(
 'Delete'			=>	'Cancella',
 'Edit'				=>	'Modifica',
 'Quote'				=>	'Cita',
-'Is subscribed'		=>	'Attualmente sei sottoscritto al topic',
-'Unsubscribe'		=>	'Rimuovi sottoscrizione',
-'Subscribe'			=>	'Sottoscrivi questa discussione',
+'Is subscribed'		=>	'Sei iscritto alla discussione',
+'Unsubscribe'		=>	'Disiscrizione',
+'Subscribe'			=>	'Avvertimi in caso di risposta!',
 'Quick post'		=>	'Risposta rapida',
 'Mod controls'		=>	'Controlli moderatore',
 'New icon'			=>	'Nuovo messaggio',
 'Re'				=>	'Re:'
+
 
 );

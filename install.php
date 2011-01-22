@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script installs
-define('FORUM_VERSION', '1.4.2');
+define('FORUM_VERSION', '1.4.3');
 
-define('FORUM_DB_REVISION', 8);
+define('FORUM_DB_REVISION', 10);
 define('FORUM_SI_REVISION', 1);
 define('FORUM_PARSER_REVISION', 1);
 
@@ -20,7 +20,16 @@ define('PUN_SEARCH_MIN_WORD', 3);
 define('PUN_SEARCH_MAX_WORD', 20);
 
 
-define('PUN_ROOT', './');
+define('PUN_ROOT', dirname(__FILE__).'/');
+
+// If we've been passed a default language, use it
+$install_lang = isset($_REQUEST['install_lang']) ? trim($_REQUEST['install_lang']) : 'English';
+
+// If such a language pack doesn't exist, or isn't up-to-date enough to translate this page, default to English
+if (!file_exists(PUN_ROOT.'lang/'.$install_lang.'/install.php'))
+	$install_lang = 'English';
+
+require PUN_ROOT.'lang/'.$install_lang.'/install.php';
 
 if (file_exists(PUN_ROOT.'config.php'))
 {
@@ -33,7 +42,7 @@ if (file_exists(PUN_ROOT.'config.php'))
 
 	// If PUN is defined, config.php is probably valid and thus the software is installed
 	if (defined('PUN'))
-		exit('It seems like FluxBB is already installed. You should go <a href="index.php">here</a> instead.');
+		exit($lang_install['Already installed']);
 }
 
 // Define PUN because email.php requires it
@@ -41,7 +50,7 @@ define('PUN', 1);
 
 // Make sure we are running at least MIN_PHP_VERSION
 if (!function_exists('version_compare') || version_compare(PHP_VERSION, MIN_PHP_VERSION, '<'))
-	exit('You are running PHP version '.PHP_VERSION.'. FluxBB '.FORUM_VERSION.' requires at least PHP '.MIN_PHP_VERSION.' to run properly. You must upgrade your PHP installation before you can continue.');
+	exit(sprintf($lang_install['You are running error'], 'PHP', PHP_VERSION, FORUM_VERSION, MIN_PHP_VERSION));
 
 // Load the functions script
 require PUN_ROOT.'include/functions.php';
@@ -87,9 +96,9 @@ if (get_magic_quotes_gpc())
 //
 function generate_config_file()
 {
-	global $db_type, $db_host, $db_name, $db_username, $db_password1, $db_prefix, $cookie_name, $cookie_seed;
+	global $db_type, $db_host, $db_name, $db_username, $db_password, $db_prefix, $cookie_name, $cookie_seed;
 
-	return '<?php'."\n\n".'$db_type = \''.$db_type."';\n".'$db_host = \''.$db_host."';\n".'$db_name = \''.addslashes($db_name)."';\n".'$db_username = \''.addslashes($db_username)."';\n".'$db_password = \''.addslashes($db_password1)."';\n".'$db_prefix = \''.addslashes($db_prefix)."';\n".'$p_connect = false;'."\n\n".'$cookie_name = '."'".$cookie_name."';\n".'$cookie_domain = '."'';\n".'$cookie_path = '."'/';\n".'$cookie_secure = 0;'."\n".'$cookie_seed = \''.random_key(16, false, true)."';\n\ndefine('PUN', 1);\n";
+	return '<?php'."\n\n".'$db_type = \''.$db_type."';\n".'$db_host = \''.$db_host."';\n".'$db_name = \''.addslashes($db_name)."';\n".'$db_username = \''.addslashes($db_username)."';\n".'$db_password = \''.addslashes($db_password)."';\n".'$db_prefix = \''.addslashes($db_prefix)."';\n".'$p_connect = false;'."\n\n".'$cookie_name = '."'".$cookie_name."';\n".'$cookie_domain = '."'';\n".'$cookie_path = '."'/';\n".'$cookie_secure = 0;'."\n".'$cookie_seed = \''.random_key(16, false, true)."';\n\ndefine('PUN', 1);\n";
 }
 
 
@@ -102,7 +111,7 @@ if (isset($_POST['generate_config']))
 	$db_host = $_POST['db_host'];
 	$db_name = $_POST['db_name'];
 	$db_username = $_POST['db_username'];
-	$db_password1 = $_POST['db_password1'];
+	$db_password = $_POST['db_password'];
 	$db_prefix = $_POST['db_prefix'];
 	$cookie_name = $_POST['cookie_name'];
 	$cookie_seed = $_POST['cookie_seed'];
@@ -124,9 +133,9 @@ if (!isset($_POST['form_sent']))
 
 	$db_type = $db_name = $db_username = $db_prefix = $username = $email = '';
 	$db_host = 'localhost';
-	$title = 'My FluxBB forum';
-	$description = '<p><span>Unfortunately no one can be told what FluxBB is - you have to see it for yourself.</span></p>';
-	$default_lang = 'English';
+	$title = $lang_install['My FluxBB Forum'];
+	$description = '<p><span>'.$lang_install['Description'].'</span></p>';
+	$default_lang = $install_lang;
 	$default_style = 'Air';
 }
 else
@@ -135,8 +144,7 @@ else
 	$db_host = pun_trim($_POST['req_db_host']);
 	$db_name = pun_trim($_POST['req_db_name']);
 	$db_username = pun_trim($_POST['db_username']);
-	$db_password1 = pun_trim($_POST['db_password1']);
-	$db_password2 = pun_trim($_POST['db_password2']);
+	$db_password = pun_trim($_POST['db_password']);
 	$db_prefix = pun_trim($_POST['db_prefix']);
 	$username = pun_trim($_POST['req_username']);
 	$email = strtolower(pun_trim($_POST['req_email']));
@@ -153,45 +161,41 @@ else
 	if (substr($base_url, -1) == '/')
 		$base_url = substr($base_url, 0, -1);
 
-	// Validate database password
-	if ($db_password1 != $db_password2)
-		$alerts[] = 'Database passwords do not match.';
-
 	// Validate username and passwords
 	if (pun_strlen($username) < 2)
-		$alerts[] = 'Usernames must be at least 2 characters long.';
+		$alerts[] = $lang_install['Username 1'];
 	else if (pun_strlen($username) > 25) // This usually doesn't happen since the form element only accepts 25 characters
-		$alerts[] = 'Usernames must not be more than 25 characters long.';
+		$alerts[] = $lang_install['Username 2'];
 	else if (!strcasecmp($username, 'Guest'))
-		$alerts[] = 'The username guest is reserved.';
+		$alerts[] = $lang_install['Username 3'];
 	else if (preg_match('/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/', $username) || preg_match('/((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))/', $username))
-		$alerts[] = 'Usernames may not be in the form of an IP address.';
+		$alerts[] = $lang_install['Username 4'];
 	else if ((strpos($username, '[') !== false || strpos($username, ']') !== false) && strpos($username, '\'') !== false && strpos($username, '"') !== false)
-		$alerts[] = 'Usernames may not contain all the characters \', " and [ or ] at once.';
+		$alerts[] = $lang_install['Username 5'];
 	else if (preg_match('/(?:\[\/?(?:b|u|i|h|colou?r|quote|code|img|url|email|list)\]|\[(?:code|quote|list)=)/i', $username))
-		$alerts[] = 'Usernames may not contain any of the text formatting tags (BBCode) that the forum uses.';
+		$alerts[] = $lang_install['Username 6'];
 
 	if (pun_strlen($password1) < 4)
-		$alerts[] = 'Passwords must be at least 4 characters long.';
+		$alerts[] = $lang_install['Short password'];
 	else if ($password1 != $password2)
-		$alerts[] = 'Passwords do not match.';
+		$alerts[] = $lang_install['Passwords not match'];
 
 	// Validate email
 	require PUN_ROOT.'include/email.php';
 
 	if (!is_valid_email($email))
-		$alerts[] = 'The administrator email address you entered is invalid.';
+		$alerts[] = $lang_install['Wrong email'];
 
 	if ($title == '')
-		$alerts[] = 'You must enter a board title.';
+		$alerts[] = $lang_install['No board title'];
 
-	$default_lang = preg_replace('#[\.\\\/]#', '', $default_lang);
-	if (!file_exists(PUN_ROOT.'lang/'.$default_lang.'/common.php'))
-		$alerts[] = 'The default language chosen doesn\'t seem to exist.';
+	$languages = forum_list_langs();
+	if (!in_array($default_lang, $languages))
+		$alerts[] = $lang_install['Error default language'];
 
-	$default_style = preg_replace('#[\.\\\/]#', '', $default_style);
-	if (!file_exists(PUN_ROOT.'style/'.$default_style.'.css'))
-		$alerts[] = 'The default style chosen doesn\'t seem to exist.';
+	$styles = forum_list_styles();
+	if (!in_array($default_style, $styles))
+		$alerts[] = $lang_install['Error default style'];
 }
 
 if (!isset($_POST['form_sent']) || !empty($alerts))
@@ -221,50 +225,53 @@ if (!isset($_POST['form_sent']) || !empty($alerts))
 		$db_extensions[] = array('pgsql', 'PostgreSQL');
 
 	if (empty($db_extensions))
-		exit('This PHP environment does not have support for any of the databases that FluxBB supports. PHP needs to have support for either MySQL, PostgreSQL or SQLite in order for FluxBB to be installed.');
+		error($lang_install['No DB extensions']);
+
+	// Fetch a list of installed languages
+	$languages = forum_list_langs();
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>FluxBB Installation</title>
+<title><?php echo $lang_install['FluxBB Installation'] ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $default_style ?>.css" />
 <script type="text/javascript">
+/* <![CDATA[ */
 function process_form(the_form)
 {
-	var element_names = new Object()
-	element_names["req_db_type"] = "Database type"
-	element_names["req_db_host"] = "Database server hostname"
-	element_names["req_db_name"] = "Database name"
-	element_names["db_prefix"] = "Table prefix"
-	element_names["req_username"] = "Administrator username"
-	element_names["req_password1"] = "Administrator password 1"
-	element_names["req_password2"] = "Administrator password 2"
-	element_names["req_email"] = "Administrator's email"
-	element_names["req_title"] = "Board title"
-	element_names["req_base_url"] = "Base URL"
-
+	var element_names = {
+		"req_db_type": "<?php echo $lang_install['Database type'] ?>",
+		"req_db_host": "<?php echo $lang_install['Database server hostname'] ?>",
+		"req_db_name": "<?php echo $lang_install['Database name'] ?>",
+		"db_prefix": "<?php echo $lang_install['Table prefix'] ?>",
+		"req_username": "<?php echo $lang_install['Administrator username'] ?>",
+		"req_password1": "<?php echo $lang_install['Administrator password 1'] ?>",
+		"req_password2": "<?php echo $lang_install['Administrator password 2'] ?>",
+		"req_email": "<?php echo $lang_install['Administrator email'] ?>",
+		"req_title": "<?php echo $lang_install['Board title'] ?>",
+		"req_base_url": "<?php echo $lang_install['Base URL'] ?>"
+	};
 	if (document.all || document.getElementById)
 	{
 		for (var i = 0; i < the_form.length; ++i)
 		{
-			var elem = the_form.elements[i]
-			if (elem.name && elem.name.substring(0, 4) == "req_")
+			var elem = the_form.elements[i];
+			if (elem.name && (/^req_/.test(elem.name)))
 			{
-				if (elem.type && (elem.type=="text" || elem.type=="textarea" || elem.type=="password" || elem.type=="file") && elem.value=='')
+				if (!elem.value && elem.type && (/^(?:text(?:area)?|password|file)$/i.test(elem.type)))
 				{
-					alert("\"" + element_names[elem.name] + "\" is a required field in this form.")
-					elem.focus()
-					return false
+					alert('"' + element_names[elem.name] + '" <?php echo $lang_install['Required field'] ?>');
+					elem.focus();
+					return false;
 				}
 			}
 		}
 	}
-
-	return true
+	return true;
 }
+/* ]]> */
 </script>
 </head>
 <body onload="document.getElementById('install').req_db_type.focus();document.getElementById('install').start.disabled=false;">
@@ -276,21 +283,54 @@ function process_form(the_form)
 <div id="brdheader" class="block">
 	<div class="box">
 		<div id="brdtitle" class="inbox">
-			<h1><span>FluxBB Installation</span></h1>
-			<div id="brddesc"><p>Welcome to FluxBB installation. You are about to install FluxBB. In order to install FluxBB, you must complete the form set out below. If you encounter any difficulties with the installation, please refer to the documentation.</p></div>
+			<h1><span><?php echo $lang_install['FluxBB Installation'] ?></span></h1>
+			<div id="brddesc"><p><?php echo $lang_install['Install message'] ?></p><p><?php echo $lang_install['Welcome'] ?></p></div>
 		</div>
 	</div>
 </div>
 
 <div id="brdmain">
+<?php if (count($languages) > 1): ?><div class="blockform">
+	<h2><span><?php echo $lang_install['Choose install language'] ?></span></h2>
+	<div class="box">
+		<form id="install" method="post" action="install.php">
+			<div class="inform">
+				<fieldset>
+					<legend><?php echo $lang_install['Install language'] ?></legend>
+					<div class="infldset">
+						<p><?php echo $lang_install['Choose install language info'] ?></p>
+						<label><strong><?php echo $lang_install['Install language'] ?></strong>
+						<br /><select name="install_lang">
+<?php
+
+		foreach ($languages as $temp)
+		{
+			if ($temp == $install_lang)
+				echo "\t\t\t\t\t".'<option value="'.$temp.'" selected="selected">'.$temp.'</option>'."\n";
+			else
+				echo "\t\t\t\t\t".'<option value="'.$temp.'">'.$temp.'</option>'."\n";
+		}
+
+?>
+						</select>
+						<br /></label>
+					</div>
+				</fieldset>
+			</div>
+			<p class="buttons"><input type="submit" name="start" value="<?php echo $lang_install['Change language'] ?>" /></p>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
+
 <div class="blockform">
-	<h2><span>Install FluxBB 1.4</span></h2>
+	<h2><span><?php echo $lang_install['Install'] ?></span></h2>
 	<div class="box">
 		<form id="install" method="post" action="install.php" onsubmit="this.start.disabled=true;if(process_form(this)){return true;}else{this.start.disabled=false;return false;}">
-		<div><input type="hidden" name="form_sent" value="1" /></div>
+		<div><input type="hidden" name="form_sent" value="1" /><input type="hidden" name="install_lang" value="<?php echo pun_htmlspecialchars($install_lang) ?>" /></div>
 			<div class="inform">
 <?php if (!empty($alerts)): ?>				<div class="forminfo error-info">
-					<h3>The following errors need to be corrected:</h3>
+					<h3><?php echo $lang_install['Errors'] ?></h3>
 					<ul class="error-list">
 <?php
 
@@ -302,16 +342,16 @@ foreach ($alerts as $cur_alert)
 <?php endif; ?>			</div>
 			<div class="inform">
 				<div class="forminfo">
-					<h3>Database setup</h3>
-					<p>Please enter the requested information in order to setup your database for FluxBB. You must know all the information asked for before proceeding with the installation.</p>
+					<h3><?php echo $lang_install['Database setup'] ?></h3>
+					<p><?php echo $lang_install['Info 1'] ?></p>
 				</div>
 				<fieldset>
-				<legend>Select your database type</legend>
+				<legend><?php echo $lang_install['Select database'] ?></legend>
 					<div class="infldset">
-						<p>FluxBB currently supports MySQL, PostgreSQL and SQLite. If your database of choice is missing from the drop-down menu below, it means this PHP environment does not have support for that particular database. More information regarding support for particular versions of each database can be found in the FAQ.</p>
-<?php if ($dual_mysql): ?>						<p>FluxBB has detected that your PHP environment supports two different ways of communicating with MySQL. The two options are called standard and improved. If you are uncertain which one to use, start by trying improved and if that fails, try standard.</p>
-<?php endif; ?><?php if ($mysql_innodb): ?>						<p>FluxBB has detected that your MySQL server might support <a href="http://dev.mysql.com/doc/refman/5.0/en/innodb.html">InnoDB</a>. This would be a good choice if you are planning to run a large forum. If you are uncertain, it is recommended that you do not use InnoDB.</p>
-<?php endif; ?>						<label class="required"><strong>Database type <span>(Required)</span></strong>
+						<p><?php echo $lang_install['Info 2'] ?></p>
+<?php if ($dual_mysql): ?>						<p><?php echo $lang_install['Dual MySQL'] ?></p>
+<?php endif; ?><?php if ($mysql_innodb): ?>						<p><?php echo $lang_install['InnoDB'] ?></p>
+<?php endif; ?>						<label class="required"><strong><?php echo $lang_install['Database type'] ?> <span><?php echo $lang_install['Required'] ?></span></strong>
 						<br /><select name="req_db_type">
 <?php
 
@@ -331,117 +371,115 @@ foreach ($alerts as $cur_alert)
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter your database server hostname</legend>
+					<legend><?php echo $lang_install['Database hostname'] ?></legend>
 					<div class="infldset">
-						<p>The address of the database server (example: localhost, db.myhost.com or 192.168.0.15). You can specify a custom port number if your database doesn't run on the default port (example: localhost:3580). For SQLite support, just enter anything or leave it at 'localhost'.</p>
-						<label class="required"><strong>Database server hostname <span>(Required)</span></strong><br /><input type="text" name="req_db_host" value="<?php echo pun_htmlspecialchars($db_host) ?>" size="50" maxlength="100" /><br /></label>
+						<p><?php echo $lang_install['Info 3'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Database server hostname'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input type="text" name="req_db_host" value="<?php echo pun_htmlspecialchars($db_host) ?>" size="50" maxlength="100" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter the name of your database</legend>
+					<legend><?php echo $lang_install['Database enter name'] ?></legend>
 					<div class="infldset">
-						<p>The name of the database that FluxBB will be installed into. The database must exist. For SQLite, this is the relative path to the database file. If the SQLite database file does not exist, FluxBB will attempt to create it.</p>
-						<label class="required"><strong>Database name <span>(Required)</span></strong><br /><input id="req_db_name" type="text" name="req_db_name" value="<?php echo pun_htmlspecialchars($db_name) ?>" size="30" maxlength="50" /><br /></label>
+						<p><?php echo $lang_install['Info 4'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Database name'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input id="req_db_name" type="text" name="req_db_name" value="<?php echo pun_htmlspecialchars($db_name) ?>" size="30" maxlength="50" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter your database username and password</legend>
+					<legend><?php echo $lang_install['Database enter informations'] ?></legend>
 					<div class="infldset">
-						<p>Enter the username and password with which you connect to the database. Ignore for SQLite.</p>
-						<label class="conl">Database username<br /><input type="text" name="db_username" value="<?php echo pun_htmlspecialchars($db_username) ?>" size="30" maxlength="50" /><br /></label>
-						<label class="conl">Database password<br /><input type="password" name="db_password1" size="30" maxlength="50" /><br /></label>
-						<label class="conl">Confirm database password<br /><input type="password" name="db_password2" size="30" maxlength="50" /><br /></label>
+						<p><?php echo $lang_install['Info 5'] ?></p>
+						<label class="conl"><?php echo $lang_install['Database username'] ?><br /><input type="text" name="db_username" value="<?php echo pun_htmlspecialchars($db_username) ?>" size="30" maxlength="50" /><br /></label>
+						<label class="conl"><?php echo $lang_install['Database password'] ?><br /><input type="password" name="db_password" size="30" maxlength="50" /><br /></label>
 						<div class="clearer"></div>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter database table prefix</legend>
+					<legend><?php echo $lang_install['Database enter prefix'] ?></legend>
 					<div class="infldset">
-						<p>If you like, you can specify a table prefix. This way you can run multiple copies of FluxBB in the same database (example: foo_).</p>
-						<label>Table prefix<br /><input id="db_prefix" type="text" name="db_prefix" value="<?php echo pun_htmlspecialchars($db_prefix) ?>" size="20" maxlength="30" /><br /></label>
+						<p><?php echo $lang_install['Info 6'] ?></p>
+						<label><?php echo $lang_install['Table prefix'] ?><br /><input id="db_prefix" type="text" name="db_prefix" value="<?php echo pun_htmlspecialchars($db_prefix) ?>" size="20" maxlength="30" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<div class="forminfo">
-					<h3>Administration setup</h3>
-					<p>Please enter the requested information in order to setup an administrator for your FluxBB installation.</p>
+					<h3><?php echo $lang_install['Administration setup'] ?></h3>
+					<p><?php echo $lang_install['Info 7'] ?></p>
 				</div>
 				<fieldset>
-					<legend>Enter Administrator's username</legend>
+					<legend><?php echo $lang_install['Admin enter username'] ?></legend>
 					<div class="infldset">
-						<p>The username of the forum administrator. You can later create more administrators and moderators. Usernames can be between 2 and 25 characters long.</p>
-						<label class="required"><strong>Administrator's username <span>(Required)</span></strong><br /><input type="text" name="req_username" value="<?php echo pun_htmlspecialchars($username) ?>" size="25" maxlength="25" /><br /></label>
+						<p><?php echo $lang_install['Info 8'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Administrator username'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input type="text" name="req_username" value="<?php echo pun_htmlspecialchars($username) ?>" size="25" maxlength="25" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter and confirm Administrator's password</legend>
+					<legend><?php echo $lang_install['Admin enter password'] ?></legend>
 					<div class="infldset">
-					<p>Passwords must be at least 4 characters long. Passwords are case sensitive.</p>
-						<label class="conl required"><strong>Password <span>(Required)</span></strong><br /><input id="req_password1" type="password" name="req_password1" size="16" /><br /></label>
-						<label class="conl required"><strong>Confirm password <span>(Required)</span></strong><br /><input type="password" name="req_password2" size="16" /><br /></label>
+						<p><?php echo $lang_install['Info 9'] ?></p>
+						<label class="conl required"><strong><?php echo $lang_install['Password'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input id="req_password1" type="password" name="req_password1" size="16" /><br /></label>
+						<label class="conl required"><strong><?php echo $lang_install['Confirm password'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input type="password" name="req_password2" size="16" /><br /></label>
 						<div class="clearer"></div>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter Administrator's email</legend>
+					<legend><?php echo $lang_install['Admin enter email'] ?></legend>
 					<div class="infldset">
-						<p>The email address of the forum administrator.</p>
-						<label class="required"><strong>Administrator's email <span>(Required)</span></strong><br /><input id="req_email" type="text" name="req_email" value="<?php echo pun_htmlspecialchars($email) ?>" size="50" maxlength="80" /><br /></label>
+						<p><?php echo $lang_install['Info 10'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Administrator email'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input id="req_email" type="text" name="req_email" value="<?php echo pun_htmlspecialchars($email) ?>" size="50" maxlength="80" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<div class="forminfo">
-					<h3>Board setup</h3>
-					<p>Please enter the requested information in order to setup your FluxBB board.</p>
+					<h3><?php echo $lang_install['Board setup'] ?></h3>
+					<p><?php echo $lang_install['Info 11'] ?></p>
 				</div>
 				<fieldset>
-					<legend>Enter your board's title</legend>
+					<legend><?php echo $lang_install['Enter board title'] ?></legend>
 					<div class="infldset">
-						<p>The title of this bulletin board (shown at the top of every page).</p>
-						<label class="required"><strong>Board title <span>(Required)</span></strong><br /><input id="req_title" type="text" name="req_title" value="<?php echo pun_htmlspecialchars($title) ?>" size="60" maxlength="255" /><br /></label>
+						<p><?php echo $lang_install['Info 12'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Board title'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input id="req_title" type="text" name="req_title" value="<?php echo pun_htmlspecialchars($title) ?>" size="60" maxlength="255" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter your board's description</legend>
+					<legend><?php echo $lang_install['Enter board description'] ?></legend>
 					<div class="infldset">
-						<p>A short description of this bulletin board (shown at the top of every page). This field may contain HTML.</p>
-						<label><strong>Board description</strong><br /><input id="desc" type="text" name="desc" value="<?php echo pun_htmlspecialchars($description) ?>" size="60" maxlength="255" /><br /></label>
+						<p><?php echo $lang_install['Info 13'] ?></p>
+						<label><?php echo $lang_install['Board description'] ?><br /><input id="desc" type="text" name="desc" value="<?php echo pun_htmlspecialchars($description) ?>" size="60" maxlength="255" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Enter the Base URL of your FluxBB installation</legend>
+					<legend><?php echo $lang_install['Enter base URL'] ?></legend>
 					<div class="infldset">
-						<p>The URL (without trailing slash) of your FluxBB forum (example: http://forum.myhost.com or http://myhost.com/~myuser). This <strong>must</strong> be correct, otherwise, administrators and moderators will not be able to submit any forms. Please note that the preset value below is just an educated guess by FluxBB.</p>
-						<label class="required"><strong>Base URL <span>(Required)</span></strong><br /><input id="req_base_url" type="text" name="req_base_url" value="<?php echo pun_htmlspecialchars($base_url) ?>" size="60" maxlength="100" /><br /></label>
+						<p><?php echo $lang_install['Info 14'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Base URL'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><input id="req_base_url" type="text" name="req_base_url" value="<?php echo pun_htmlspecialchars($base_url) ?>" size="60" maxlength="100" /><br /></label>
 					</div>
 				</fieldset>
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Choose the default language</legend>
+					<legend><?php echo $lang_install['Choose the default language'] ?></legend>
 					<div class="infldset">
-						<p>The default language used for guests and users who haven't changed from the default in their profile.</p>
-						<label class="required"><strong>Default language <span>(Required)</span></strong><br /><select id="req_default_lang" name="req_default_lang">
+						<p><?php echo $lang_install['Info 15'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Default language'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><select id="req_default_lang" name="req_default_lang">
 <?php
 
 		$languages = forum_list_langs();
-
 		foreach ($languages as $temp)
 		{
 			if ($temp == $default_lang)
@@ -457,14 +495,13 @@ foreach ($alerts as $cur_alert)
 			</div>
 			<div class="inform">
 				<fieldset>
-					<legend>Choose the default style</legend>
+					<legend><?php echo $lang_install['Choose the default style'] ?></legend>
 					<div class="infldset">
-						<p>The default style used for guests and users who haven't changed from the default in their profile.</p>
-						<label class="required"><strong>Default style <span>(Required)</span></strong><br /><select id="req_default_style" name="req_default_style">
+						<p><?php echo $lang_install['Info 16'] ?></p>
+						<label class="required"><strong><?php echo $lang_install['Default style'] ?> <span><?php echo $lang_install['Required'] ?></span></strong><br /><select id="req_default_style" name="req_default_style">
 <?php
 
 		$styles = forum_list_styles();
-
 		foreach ($styles as $temp)
 		{
 			if ($temp == $default_style)
@@ -478,7 +515,7 @@ foreach ($alerts as $cur_alert)
 					</div>
 				</fieldset>
 			</div>
-			<p class="buttons"><input type="submit" name="start" value="Start install" /></p>
+			<p class="buttons"><input type="submit" name="start" value="<?php echo $lang_install['Start install'] ?>" /></p>
 		</form>
 	</div>
 </div>
@@ -523,15 +560,15 @@ else
 			break;
 
 		default:
-			error('\''.pun_htmlspecialchars($db_type).'\' is not a valid database type');
+			error(sprintf($lang_install['DB type not valid'], pun_htmlspecialchars($db_type)));
 	}
 
 	// Create the database object (and connect/select db)
-	$db = new DBLayer($db_host, $db_username, $db_password1, $db_name, $db_prefix, false);
+	$db = new DBLayer($db_host, $db_username, $db_password, $db_name, $db_prefix, false);
 
 	// Validate prefix
 	if (strlen($db_prefix) > 0 && (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $db_prefix) || strlen($db_prefix) > 40))
-		error('The table prefix \''.$db->prefix.'\' contains illegal characters or is too long. The prefix may contain the letters a to z, any numbers and the underscore character. They must however not start with a number. The maximum length is 40 characters. Please choose a different prefix');
+		error(sprintf($lang_install['Table prefix error'], $db->prefix));
 
 	// Do some DB type specific checks
 	switch ($db_type)
@@ -542,18 +579,18 @@ else
 		case 'mysqli_innodb':
 			$mysql_info = $db->get_version();
 			if (version_compare($mysql_info['version'], MIN_MYSQL_VERSION, '<'))
-				error('You are running MySQL version '.$mysql_version.'. FluxBB '.FORUM_VERSION.' requires at least MySQL '.MIN_MYSQL_VERSION.' to run properly. You must upgrade your MySQL installation before you can continue');
+				error(sprintf($lang_install['You are running error'], 'MySQL', $mysql_info['version'], FORUM_VERSION, MIN_MYSQL_VERSION));
 			break;
 
 		case 'pgsql':
 			$pgsql_info = $db->get_version();
 			if (version_compare($pgsql_info['version'], MIN_PGSQL_VERSION, '<'))
-				error('You are running PostgreSQL version '.$pgsql_info.'. FluxBB '.FORUM_VERSION.' requires at least PostgreSQL '.MIN_PGSQL_VERSION.' to run properly. You must upgrade your PostgreSQL installation before you can continue');
+				error(sprintf($lang_install['You are running error'], 'PostgreSQL', $pgsql_info['version'], FORUM_VERSION, MIN_PGSQL_VERSION));
 			break;
 
 		case 'sqlite':
 			if (strtolower($db_prefix) == 'sqlite_')
-				error('The table prefix \'sqlite_\' is reserved for use by the SQLite engine. Please choose a different prefix');
+				error($lang_install['Prefix reserved']);
 			break;
 	}
 
@@ -561,7 +598,7 @@ else
 	// Make sure FluxBB isn't already installed
 	$result = $db->query('SELECT 1 FROM '.$db_prefix.'users WHERE id=1');
 	if ($db->num_rows($result))
-		error('A table called "'.$db_prefix.'users" is already present in the database "'.$db_name.'". This could mean that FluxBB is already installed or that another piece of software is installed and is occupying one or more of the table names FluxBB requires. If you want to install multiple copies of FluxBB in the same database, you must choose a different table prefix');
+		error(sprintf($lang_install['Existing table error'], $db_prefix, $db_name));
 
 	// Check if InnoDB is available
 	if ($db_type == 'mysql_innodb' || $db_type == 'mysqli_innodb')
@@ -569,7 +606,7 @@ else
 		$result = $db->query('SHOW VARIABLES LIKE \'have_innodb\'');
 		list (, $result) = $db->fetch_row($result);
 		if ((strtoupper($result) != 'YES'))
-			error('InnoDB does not seem to be enabled. Please choose a database layer that does not have InnoDB support, or enable InnoDB on your MySQL server');
+			error($lang_install['InnoDB off']);
 	}
 
 
@@ -1195,7 +1232,26 @@ else
 		'PRIMARY KEY'	=> array('user_id', 'topic_id')
 	);
 
-	$db->create_table('subscriptions', $schema) or error('Unable to create subscriptions table', __FILE__, __LINE__, $db->error());
+	$db->create_table('topic_subscriptions', $schema) or error('Unable to create topic subscriptions table', __FILE__, __LINE__, $db->error());
+
+
+	$schema = array(
+		'FIELDS'		=> array(
+			'user_id'		=> array(
+				'datatype'		=> 'INT(10) UNSIGNED',
+				'allow_null'	=> false,
+				'default'		=> '0'
+			),
+			'forum_id'		=> array(
+				'datatype'		=> 'INT(10) UNSIGNED',
+				'allow_null'	=> false,
+				'default'		=> '0'
+			)
+		),
+		'PRIMARY KEY'	=> array('user_id', 'forum_id')
+	);
+
+	$db->create_table('forum_subscriptions', $schema) or error('Unable to create forum subscriptions table', __FILE__, __LINE__, $db->error());
 
 
 	$schema = array(
@@ -1487,19 +1543,19 @@ else
 	$now = time();
 
 	// Insert the four preset groups
-	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '1, ' : '')."'Administrators', 'Administrator', 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
+	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '1, ' : '').'\''.$db->escape($lang_install['Administrators']).'\', \''.$db->escape($lang_install['Administrator']).'\', 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0)') or error('Unable to add group', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '2, ' : '')."'Moderators', 'Moderator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
+	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '2, ' : '').'\''.$db->escape($lang_install['Moderators']).'\', \''.$db->escape($lang_install['Moderator']).'\', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0)') or error('Unable to add group', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '3, ' : '')."'Guest', NULL, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 60, 30, 0)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
+	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '3, ' : '').'\''.$db->escape($lang_install['Guest']).'\', NULL, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 60, 30, 0)') or error('Unable to add group', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '4, ' : '')."'Members', NULL, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 60, 30, 60)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
+	$db->query('INSERT INTO '.$db->prefix.'groups ('.($db_type != 'pgsql' ? 'g_id, ' : '').'g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('.($db_type != 'pgsql' ? '4, ' : '').'\''.$db->escape($lang_install['Member']).'\', NULL, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 60, 30, 60)') or error('Unable to add group', __FILE__, __LINE__, $db->error());
 
 	// Insert guest and first admin user
-	$db->query('INSERT INTO '.$db_prefix."users (group_id, username, password, email) VALUES(3, 'Guest', 'Guest', 'Guest')")
+	$db->query('INSERT INTO '.$db_prefix.'users (group_id, username, password, email) VALUES(3, \''.$db->escape($lang_install['Guest']).'\', \''.$db->escape($lang_install['Guest']).'\', \''.$db->escape($lang_install['Guest']).'\')')
 		or error('Unable to add guest user. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."users (group_id, username, password, email, num_posts, last_post, registered, registration_ip, last_visit) VALUES(1, '".$db->escape($username)."', '".pun_hash($password1)."', '$email', 1, ".$now.", ".$now.", '127.0.0.1', ".$now.')')
+	$db->query('INSERT INTO '.$db_prefix.'users (group_id, username, password, email, language, style, num_posts, last_post, registered, registration_ip, last_visit) VALUES(1, \''.$db->escape($username).'\', \''.pun_hash($password1).'\', \''.$email.'\', \''.$db->escape($default_lang).'\', \''.$db->escape($default_style).'\', 1, '.$now.', '.$now.', \''.get_remote_address().'\', '.$now.')')
 		or error('Unable to add administrator user. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
 	// Enable/disable avatars depending on file_uploads setting in PHP configuration
@@ -1556,7 +1612,8 @@ else
 		'o_base_url'				=> "'".$db->escape($base_url)."'",
 		'o_admin_email'				=> "'".$email."'",
 		'o_webmaster_email'			=> "'".$email."'",
-		'o_subscriptions'			=> "'1'",
+		'o_forum_subscriptions'		=> "'1'",
+		'o_topic_subscriptions'		=> "'1'",
 		'o_smtp_host'				=> "NULL",
 		'o_smtp_user'				=> "NULL",
 		'o_smtp_pass'				=> "NULL",
@@ -1564,11 +1621,11 @@ else
 		'o_regs_allow'				=> "'1'",
 		'o_regs_verify'				=> "'0'",
 		'o_announcement'			=> "'0'",
-		'o_announcement_message'	=> "'Enter your announcement here.'",
+		'o_announcement_message'	=> "'".$db->escape($lang_install['Announcement'])."'",
 		'o_rules'					=> "'0'",
-		'o_rules_message'			=> "'Enter your rules here.'",
+		'o_rules_message'			=> "'".$db->escape($lang_install['Rules'])."'",
 		'o_maintenance'				=> "'0'",
-		'o_maintenance_message'		=> "'The forums are temporarily down for maintenance. Please try again in a few minutes.<br />\\n<br />\\n/Administrator'",
+		'o_maintenance_message'		=> "'".$db->escape($lang_install['Maintenance message'])."'",
 		'o_default_dst'				=> "'0'",
 		'o_feed_type'				=> "'2'",
 		'p_message_bbcode'			=> "'1'",
@@ -1592,25 +1649,25 @@ else
 	}
 
 	// Insert some other default data
-	$subject = 'Test post';
-	$message = 'If you are looking at this (which I guess you are), the install of FluxBB appears to have worked! Now log in and head over to the administration control panel to configure your forum.';
+	$subject = $lang_install['Test post'];
+	$message = $lang_install['Message'];
 
-	$db->query('INSERT INTO '.$db_prefix."ranks (rank, min_posts) VALUES('New member', 0)")
+	$db->query('INSERT INTO '.$db_prefix.'ranks (rank, min_posts) VALUES(\''.$db->escape($lang_install['New member']).'\', 0)')
 		or error('Unable to insert into table '.$db_prefix.'ranks. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."ranks (rank, min_posts) VALUES('Member', 10)")
+	$db->query('INSERT INTO '.$db_prefix.'ranks (rank, min_posts) VALUES(\''.$db->escape($lang_install['Member']).'\', 10)')
 		or error('Unable to insert into table '.$db_prefix.'ranks. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."categories (cat_name, disp_position) VALUES('Test category', 1)")
+	$db->query('INSERT INTO '.$db_prefix.'categories (cat_name, disp_position) VALUES(\''.$db->escape($lang_install['Test category']).'\', 1)')
 		or error('Unable to insert into table '.$db_prefix.'categories. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."forums (forum_name, forum_desc, num_topics, num_posts, last_post, last_post_id, last_poster, disp_position, cat_id) VALUES('Test forum', 'This is just a test forum', 1, 1, ".$now.", 1, '".$db->escape($username)."', 1, 1)")
+	$db->query('INSERT INTO '.$db_prefix.'forums (forum_name, forum_desc, num_topics, num_posts, last_post, last_post_id, last_poster, disp_position, cat_id) VALUES(\''.$db->escape($lang_install['Test forum']).'\', \''.$db->escape($lang_install['This is just a test forum']).'\', 1, 1, '.$now.', 1, \''.$db->escape($username).'\', 1, 1)')
 		or error('Unable to insert into table '.$db_prefix.'forums. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."topics (poster, subject, posted, first_post_id, last_post, last_post_id, last_poster, forum_id) VALUES('".$db->escape($username)."', '".$db->escape($subject)."', ".$now.", 1, ".$now.", 1, '".$db->escape($username)."', 1)")
+	$db->query('INSERT INTO '.$db_prefix.'topics (poster, subject, posted, first_post_id, last_post, last_post_id, last_poster, forum_id) VALUES(\''.$db->escape($username).'\', \''.$db->escape($subject).'\', '.$now.', 1, '.$now.', 1, \''.$db->escape($username).'\', 1)')
 		or error('Unable to insert into table '.$db_prefix.'topics. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
-	$db->query('INSERT INTO '.$db_prefix."posts (poster, poster_id, poster_ip, message, posted, topic_id) VALUES('".$db->escape($username)."', 2, '127.0.0.1', '".$db->escape($message)."', ".$now.', 1)')
+	$db->query('INSERT INTO '.$db_prefix.'posts (poster, poster_id, poster_ip, message, posted, topic_id) VALUES(\''.$db->escape($username).'\', 2, \''.get_remote_address().'\', \''.$db->escape($message).'\', '.$now.', 1)')
 		or error('Unable to insert into table '.$db_prefix.'posts. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
 	// Index the test post so searching for it works
@@ -1623,16 +1680,16 @@ else
 
 	$alerts = array();
 	// Check if the cache directory is writable
-	if (!@is_writable('./cache/'))
-		$alerts[] = '<strong>The cache directory is currently not writable!</strong> In order for FluxBB to function properly, the directory named <em>cache</em> must be writable by PHP. Use chmod to set the appropriate directory permissions. If in doubt, chmod to 0777.';
+	if (!@is_writable(PUN_ROOT.'cache/'))
+		$alerts[] = $lang_install['Alert cache'];
 
 	// Check if default avatar directory is writable
-	if (!@is_writable('./img/avatars/'))
-		$alerts[] = '<strong>The avatar directory is currently not writable!</strong> If you want users to be able to upload their own avatar images you must see to it that the directory named <em>img/avatars</em> is writable by PHP. You can later choose to save avatar images in a different directory (see Admin/Options). Use chmod to set the appropriate directory permissions. If in doubt, chmod to 0777.';
+	if (!@is_writable(PUN_ROOT.'img/avatars/'))
+		$alerts[] = $lang_install['Alert avatar'];
 
 	// Check if we disabled uploading avatars because file_uploads was disabled
 	if ($avatars == '0')
-		$alerts[] = '<strong>File uploads appear to be disallowed on this server!</strong> If you want users to be able to upload their own avatar images you must enable the file_uploads configuration setting in PHP. Once file uploads have been enabled, avatar uploads can be enabled in Administration/Options/Features.';
+		$alerts[] = $lang_install['Alert upload'];
 
 	// Add some random bytes at the end of the cookie name to prevent collisions
 	$cookie_name = 'pun_cookie_'.random_key(6, false, true);
@@ -1661,7 +1718,7 @@ else
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>FluxBB Installation</title>
+<title><?php echo $lang_install['FluxBB Installation'] ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $default_style ?>.css" />
 </head>
 <body>
@@ -1673,8 +1730,8 @@ else
 <div id="brdheader" class="block">
 	<div class="box">
 		<div id="brdtitle" class="inbox">
-			<h1><span>FluxBB Installation</span></h1>
-			<div id="brddesc"><p>FluxBB has been installed. To finalize the installation please follow the instructions below.</p></div>
+			<h1><span><?php echo $lang_install['FluxBB Installation'] ?></span></h1>
+			<div id="brddesc"><p><?php echo $lang_install['FluxBB has been installed'] ?></p></div>
 		</div>
 	</div>
 </div>
@@ -1682,7 +1739,7 @@ else
 <div id="brdmain">
 
 <div class="blockform">
-	<h2><span>Final instructions</span></h2>
+	<h2><span><?php echo $lang_install['Final instructions'] ?></span></h2>
 	<div class="box">
 <?php
 
@@ -1693,15 +1750,15 @@ if (!$written)
 		<form method="post" action="install.php">
 			<div class="inform">
 				<div class="forminfo">
-					<p>To finalize the installation, you need to click on the button below to download a file called config.php. You then need to upload this file to the root directory of your FluxBB installation.</p>
-					<p>Once you have uploaded config.php, FluxBB will be fully installed! At that point, you may <a href="index.php">go to the forum index</a>.</p>
+					<p><?php echo $lang_install['Info 17'] ?></p>
+					<p><?php echo $lang_install['Info 18'] ?></p>
 				</div>
 				<input type="hidden" name="generate_config" value="1" />
 				<input type="hidden" name="db_type" value="<?php echo $db_type; ?>" />
 				<input type="hidden" name="db_host" value="<?php echo $db_host; ?>" />
 				<input type="hidden" name="db_name" value="<?php echo pun_htmlspecialchars($db_name); ?>" />
 				<input type="hidden" name="db_username" value="<?php echo pun_htmlspecialchars($db_username); ?>" />
-				<input type="hidden" name="db_password1" value="<?php echo pun_htmlspecialchars($db_password1); ?>" />
+				<input type="hidden" name="db_password" value="<?php echo pun_htmlspecialchars($db_password); ?>" />
 				<input type="hidden" name="db_prefix" value="<?php echo pun_htmlspecialchars($db_prefix); ?>" />
 				<input type="hidden" name="cookie_name" value="<?php echo pun_htmlspecialchars($cookie_name); ?>" />
 				<input type="hidden" name="cookie_seed" value="<?php echo pun_htmlspecialchars($cookie_seed); ?>" />
@@ -1716,7 +1773,7 @@ foreach ($alerts as $cur_alert)
 					</ul>
 				</div>
 <?php endif; ?>			</div>
-			<p class="buttons"><input type="submit" value="Download config.php file" /></p>
+			<p class="buttons"><input type="submit" value="<?php echo $lang_install['Download config.php file'] ?>" /></p>
 		</form>
 
 <?php
@@ -1729,7 +1786,7 @@ else
 		<div class="fakeform">
 			<div class="inform">
 				<div class="forminfo">
-					<p>FluxBB has been fully installed! You may now <a href="index.php">go to the forum index</a>.</p>
+					<p><?php echo $lang_install['FluxBB fully installed'] ?></p>
 				</div>
 			</div>
 		</div>

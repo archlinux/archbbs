@@ -1,12 +1,12 @@
-Subject: Utente rinominato
+Subject: Nome utente modificato su <board_title>
 
-Durante un aggiornamento del forum <base_url> abbiamo notato che il tuo nome utente è troppo simile ad un utente già registrato. Il tuo nome utente è stato cambiato in modo adeguato.
+Durante le operazioni di aggiornamento di <base_url>, abbiamo notato che il nome utente da te utilizzato era troppo simile a quello di un utente gi� registrato. Per questa ragione il sistema ti ha attribuito automaticamente un nuovo nome.
 
 Vecchio nome utente: <old_username>
 Nuovo nome utente: <new_username>
 
-Ci scusiamo per l'incoveniente che abbiamo causato.
+Ci scusiamo per ogni inconveniente!
 
 --
 <board_mailer>
-(Non rispondere a questo messaggio)
+(messaggio generato automaticamente)

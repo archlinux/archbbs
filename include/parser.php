@@ -18,20 +18,20 @@ if (!defined('PUN'))
 \]                    # closing bracket of outermost opening LIST tag
 (                     # capture contents of LIST tag in group 2
   (?:                 # non capture group for either contents or whole nested LIST
-    [^\[]*+           # unroll the loop! consume everything up to next [ (normal *)
-    (?:               # (See "Mastering Regular Expressions" chapter 6 for details)
-      (?!             # negative lookahead ensures we are NOT on [LIST*] or [/LIST]
-        \[list        # opening LIST tag
-        (?:=[1a*])?+  # with optional attribute
-        \]            # closing bracket of opening LIST tag
-        |             # or...
-        \[/list\]     # a closing LIST tag
-      )               # end negative lookahead assertion (we are not on a LIST tag)
-      \[              # match the [ which is NOT the start of LIST tag (special)
-      [^\[]*+         # consume everything up to next [ (normal *)
-    )*+               # finish up "unrolling the loop" technique (special (normal*))*
+	[^\[]*+           # unroll the loop! consume everything up to next [ (normal *)
+	(?:               # (See "Mastering Regular Expressions" chapter 6 for details)
+	  (?!             # negative lookahead ensures we are NOT on [LIST*] or [/LIST]
+		\[list        # opening LIST tag
+		(?:=[1a*])?+  # with optional attribute
+		\]            # closing bracket of opening LIST tag
+		|             # or...
+		\[/list\]     # a closing LIST tag
+	  )               # end negative lookahead assertion (we are not on a LIST tag)
+	  \[              # match the [ which is NOT the start of LIST tag (special)
+	  [^\[]*+         # consume everything up to next [ (normal *)
+	)*+               # finish up "unrolling the loop" technique (special (normal*))*
   |                   # or...
-    (?R)              # recursively match a whole nested LIST element
+	(?R)              # recursively match a whole nested LIST element
   )*                  # as many times as necessary until deepest nested LIST tag grabbed
 )                     # end capturing contents of LIST tag into group 2
 \[/list\]             # match outermost closing LIST tag
@@ -64,7 +64,7 @@ $smilies = array(
 //
 function preparse_bbcode($text, &$errors, $is_signature = false)
 {
-	global $pun_config, $lang_common, $re_list;
+	global $pun_config, $lang_common, $lang_post, $re_list;
 
 	if ($is_signature)
 	{
@@ -100,15 +100,15 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 		$text = '';
 
 		$num_tokens = count($outside);
-
 		for ($i = 0; $i < $num_tokens; ++$i)
 		{
 			$text .= $outside[$i];
 			if (isset($inside[$i]))
 				$text .= '[code]'.$inside[$i].'[/code]';
 		}
+
+		unset($inside);
 	}
-	unset($inside);
 
 	$temp_text = false;
 	if (empty($errors))
@@ -121,7 +121,14 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 	while (($new_text = strip_empty_bbcode($text, $errors)) !== false)
 	{
 		if ($new_text != $text)
+		{
 			$text = $new_text;
+			if ($new_text == '')
+			{
+				$errors[] = $lang_post['Empty after strip'];
+				break;
+			}
+		}
 		else
 			break;
 	}
@@ -143,7 +150,7 @@ function strip_empty_bbcode($text, &$errors)
 	}
 
 	// Remove empty tags
-	while (($new_text = preg_replace('/\[(b|u|s|ins|del|em|i|h|colou?r|quote|img|url|email|list)(?:\=[^\]]*)?\]\s*\[\/\1\]/', '', $text)) !== false)
+	while (($new_text = preg_replace('/\[(b|u|s|ins|del|em|i|h|colou?r|quote|img|url|email|list)(?:\=[^\]]*)?\]\s*\[\/\1\]/', '', $text)) !== NULL)
 	{
 		if ($new_text != $text)
 			$text = $new_text;
@@ -167,7 +174,7 @@ function strip_empty_bbcode($text, &$errors)
 	}
 
 	// Remove empty code tags
-	while (($new_text = preg_replace('/\[(code)\]\s*\[\/\1\]/', '', $text)) !== false)
+	while (($new_text = preg_replace('/\[(code)\]\s*\[\/\1\]/', '', $text)) !== NULL)
 	{
 		if ($new_text != $text)
 			$text = $new_text;
@@ -194,7 +201,7 @@ function preparse_tags($text, &$errors, $is_signature = false)
 	$tags_opened = $tags;
 	// and tags we need to check are closed (the same as above, added it just in case)
 	$tags_closed = $tags;
-	// Tags we can nest and the depth they can be nested to (only quotes)
+	// Tags we can nest and the depth they can be nested to
 	$tags_nested = array('quote' => $pun_config['o_quote_depth'], 'list' => 5, '*' => 5);
 	// Tags to ignore the contents of completely (just code)
 	$tags_ignore = array('code');
@@ -610,41 +617,6 @@ function preparse_list_tag($content, $type = '*', &$errors)
 
 
 //
-// Split text into chunks ($inside contains all text inside $start and $end, and $outside contains all text outside)
-//
-function split_text($text, $start, $end, &$errors, $retab = true)
-{
-	global $pun_config, $lang_common;
-
-	$tokens = explode($start, $text);
-
-	$outside[] = $tokens[0];
-
-	$num_tokens = count($tokens);
-	for ($i = 1; $i < $num_tokens; ++$i)
-	{
-		$temp = explode($end, $tokens[$i]);
-
-		if (count($temp) != 2)
-		{
-			$errors[] = $lang_common['BBCode code problem'];
-			return array(null, array($text));
-		}
-		$inside[] = $temp[0];
-		$outside[] = $temp[1];
-	}
-
-	if ($pun_config['o_indent_num_spaces'] != 8 && $retab)
-	{
-		$spaces = str_repeat(' ', $pun_config['o_indent_num_spaces']);
-		$inside = str_replace("\t", $spaces, $inside);
-	}
-
-	return array($inside, $outside);
-}
-
-
-//
 // Truncate URL if longer than 55 characters (add http:// or ftp:// if missing)
 //
 function handle_url_tag($url, $link = '', $bbcode = false)
@@ -831,7 +803,7 @@ function do_smilies($text)
 	foreach ($smilies as $smiley_text => $smiley_img)
 	{
 		if (strpos($text, $smiley_text) !== false)
-			$text = preg_replace("#(?<=[>\s])".preg_quote($smiley_text, '#')."(?=\W)#m", '<img src="'.$pun_config['o_base_url'].'/img/smilies/'.$smiley_img.'" width="15" height="15" alt="'.substr($smiley_img, 0, strrpos($smiley_img, '.')).'" />', $text);
+			$text = preg_replace("#(?<=[>\s])".preg_quote($smiley_text, '#')."(?=\W)#m", '<img src="'.pun_htmlspecialchars(get_base_url(true).'/img/smilies/'.$smiley_img).'" width="15" height="15" alt="'.substr($smiley_img, 0, strrpos($smiley_img, '.')).'" />', $text);
 	}
 
 	return substr($text, 1, -1);

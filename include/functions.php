@@ -173,6 +173,28 @@ function get_current_url($max_length = 0)
 
 
 //
+// Fetch the base_url, optionally support HTTPS and HTTP
+//
+function get_base_url($support_https = false)
+{
+	global $pun_config;
+	static $base_url;
+
+	if (!$support_https)
+		return $pun_config['o_base_url'];
+
+	if (!isset($base_url))
+	{
+		// Make sure we are using the correct protocol
+		$protocol = (!isset($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off') ? 'http://' : 'https://';
+		$base_url = str_replace(array('http://', 'https://'), $protocol, $pun_config['o_base_url']);
+	}
+
+	return $base_url;
+}
+
+
+//
 // Fill $pun_user with default values (for guests)
 //
 function set_default_user()
@@ -231,7 +253,7 @@ function pun_setcookie($user_id, $password_hash, $expire)
 {
 	global $cookie_name, $cookie_seed;
 
-	forum_setcookie($cookie_name, serialize(array($user_id, md5($cookie_seed.$password_hash), $expire)), $expire);
+	forum_setcookie($cookie_name, serialize(array((string) $user_id, md5($cookie_seed.$password_hash), (int) $expire)), $expire);
 }
 
 
@@ -510,7 +532,7 @@ function generate_avatar_markup($user_id)
 
 		if (file_exists(PUN_ROOT.$path) && $img_size = getimagesize(PUN_ROOT.$path))
 		{
-			$avatar_markup = '<img src="'.$pun_config['o_base_url'].'/'.$path.'?m='.filemtime(PUN_ROOT.$path).'" '.$img_size[3].' alt="" />';
+			$avatar_markup = '<img src="'.pun_htmlspecialchars(get_base_url(true).'/'.$path.'?m='.filemtime(PUN_ROOT.$path)).'" '.$img_size[3].' alt="" />';
 			break;
 		}
 	}
@@ -668,7 +690,7 @@ function delete_topic($topic_id)
 	}
 
 	// Delete any subscriptions for this topic
-	$db->query('DELETE FROM '.$db->prefix.'subscriptions WHERE topic_id='.$topic_id) or error('Unable to delete subscriptions', __FILE__, __LINE__, $db->error());
+	$db->query('DELETE FROM '.$db->prefix.'topic_subscriptions WHERE topic_id='.$topic_id) or error('Unable to delete subscriptions', __FILE__, __LINE__, $db->error());
 }
 
 
@@ -885,12 +907,10 @@ function paginate($num_pages, $cur_page, $link)
 //
 function message($message, $no_back_link = false)
 {
-	global $db, $lang_common, $pun_config, $pun_start, $tpl_main;
+	global $db, $lang_common, $pun_config, $pun_start, $tpl_main, $pun_user;
 
 	if (!defined('PUN_HEADER'))
 	{
-		global $pun_user;
-
 		$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_common['Info']);
 		define('PUN_ACTIVE_PAGE', 'index');
 		require PUN_ROOT.'header.php';
@@ -1012,14 +1032,29 @@ if (!function_exists('file_get_contents'))
 
 
 //
-// Make sure that HTTP_REFERER matches $pun_config['o_base_url']/$script
+// Make sure that HTTP_REFERER matches base_url/script
 //
-function confirm_referrer($script)
+function confirm_referrer($script, $error_msg = false)
 {
 	global $pun_config, $lang_common;
 
-	if (!preg_match('#^'.preg_quote(str_replace('www.', '', $pun_config['o_base_url']).'/'.$script, '#').'#i', str_replace('www.', '', (isset($_SERVER['HTTP_REFERER']) ? urldecode($_SERVER['HTTP_REFERER']) : ''))))
-		message($lang_common['Bad referrer']);
+	// There is no referrer
+	if (empty($_SERVER['HTTP_REFERER']))
+		message($error_msg ? $error_msg : $lang_common['Bad referrer']);
+
+	$referrer = parse_url(strtolower($_SERVER['HTTP_REFERER']));
+	// Remove www subdomain if it exists
+	if (strpos($referrer['host'], 'www.') === 0)
+		$referrer['host'] = substr($referrer['host'], 4);
+
+	$valid = parse_url(strtolower(get_base_url().'/'.$script));
+	// Remove www subdomain if it exists
+	if (strpos($valid['host'], 'www.') === 0)
+		$valid['host'] = substr($valid['host'], 4);
+
+	// Check the host and path match. Ignore the scheme, port, etc.
+	if ($referrer['host'] != $valid['host'] || $referrer['path'] != $valid['path'])
+		message($error_msg ? $error_msg : $lang_common['Bad referrer']);
 }
 
 
@@ -1101,9 +1136,9 @@ function pun_linebreaks($str)
 //
 // A wrapper for utf8_trim for compatibility
 //
-function pun_trim($str)
+function pun_trim($str, $charlist = false)
 {
-	return utf8_trim($str);
+	return utf8_trim($str, $charlist);
 }
 
 //
@@ -1252,9 +1287,9 @@ function redirect($destination_url, $message)
 {
 	global $db, $pun_config, $lang_common, $pun_user;
 
-	// Prefix with o_base_url (unless there's already a valid URI)
+	// Prefix with base_url (unless there's already a valid URI)
 	if (strpos($destination_url, 'http://') !== 0 && strpos($destination_url, 'https://') !== 0 && strpos($destination_url, '/') !== 0)
-		$destination_url = $pun_config['o_base_url'].'/'.$destination_url;
+		$destination_url = get_base_url(true).'/'.$destination_url;
 
 	// Do a little spring cleaning
 	$destination_url = preg_replace('/([\r\n])|(%0[ad])|(;\s*data\s*:)/i', '', $destination_url);
@@ -1548,11 +1583,6 @@ function remove_bad_characters($array)
 			"\xef\xbf\xbb"	=> '',		// INTERLINEAR ANNOTATION TERMINATOR	FFFB	*
 			"\xef\xbf\xbc"	=> '',		// OBJECT REPLACEMENT CHARACTER			FFFC	*
 			"\xef\xbf\xbd"	=> '',		// REPLACEMENT CHARACTER				FFFD	*
-			"\xc2\xad"		=> '-',		// SOFT HYPHEN							00AD
-			"\xE2\x80\x9C"	=> '"',		// LEFT DOUBLE QUOTATION MARK			201C
-			"\xE2\x80\x9D"	=> '"',		// RIGHT DOUBLE QUOTATION MARK			201D
-			"\xE2\x80\x98"	=> '\'',	// LEFT SINGLE QUOTATION MARK			2018
-			"\xE2\x80\x99"	=> '\'',	// RIGHT SINGLE QUOTATION MARK			2019
 			"\xe2\x80\x80"	=> ' ',		// EN QUAD								2000	*
 			"\xe2\x80\x81"	=> ' ',		// EM QUAD								2001	*
 			"\xe2\x80\x82"	=> ' ',		// EN SPACE								2002	*
@@ -1669,6 +1699,42 @@ function forum_list_plugins($is_admin)
 
 	return $plugins;
 }
+
+
+//
+// Split text into chunks ($inside contains all text inside $start and $end, and $outside contains all text outside)
+//
+function split_text($text, $start, $end, &$errors, $retab = true)
+{
+	global $pun_config, $lang_common;
+
+	$tokens = explode($start, $text);
+
+	$outside[] = $tokens[0];
+
+	$num_tokens = count($tokens);
+	for ($i = 1; $i < $num_tokens; ++$i)
+	{
+		$temp = explode($end, $tokens[$i]);
+
+		if (count($temp) != 2)
+		{
+			$errors[] = $lang_common['BBCode code problem'];
+			return array(null, array($text));
+		}
+		$inside[] = $temp[0];
+		$outside[] = $temp[1];
+	}
+
+	if ($pun_config['o_indent_num_spaces'] != 8 && $retab)
+	{
+		$spaces = str_repeat(' ', $pun_config['o_indent_num_spaces']);
+		$inside = str_replace("\t", $spaces, $inside);
+	}
+
+	return array($inside, $outside);
+}
+
 
 // DEBUG FUNCTIONS BELOW
 
