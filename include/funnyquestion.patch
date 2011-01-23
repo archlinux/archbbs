@@ -1,14 +1,14 @@
---- a/post.php
-+++ b/post.php
+--- post.php	2011-01-22 21:57:40.000000000 +0100
++++ post.php	2011-01-23 12:06:00.669960234 +0100
 @@ -8,6 +8,7 @@
  
- define('PUN_ROOT', './');
+ define('PUN_ROOT', dirname(__FILE__).'/');
  require PUN_ROOT.'include/common.php';
 +require PUN_ROOT.'include/funnyquestion.php';
  
  
  if ($pun_user['g_read_board'] == '0')
-@@ -59,6 +60,7 @@ $errors = array();
+@@ -59,6 +60,7 @@
  // Did someone just hit "Submit" or "Preview"?
  if (isset($_POST['form_sent']))
  {
@@ -16,7 +16,7 @@
  	// Make sure form_user is correct
  	if (($pun_user['is_guest'] && $_POST['form_user'] != 'Guest') || (!$pun_user['is_guest'] && $_POST['form_user'] != $pun_user['username']))
  		message($lang_common['Bad request']);
-@@ -554,6 +556,7 @@ if (!empty($checkboxes))
+@@ -660,6 +662,7 @@
  
  ?>
  			</div>
@@ -24,17 +24,17 @@
  			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
  		</form>
  	</div>
---- a/register.php
-+++ b/register.php
+--- register.php	2011-01-22 21:57:40.000000000 +0100
++++ register.php	2011-01-23 12:06:00.669960234 +0100
 @@ -8,6 +8,7 @@
  
- define('PUN_ROOT', './');
+ define('PUN_ROOT', dirname(__FILE__).'/');
  require PUN_ROOT.'include/common.php';
 +require PUN_ROOT.'include/funnyquestion.php';
  
  
  // If we are logged in, we shouldn't be here
-@@ -65,6 +66,7 @@ $errors = array();
+@@ -65,6 +66,7 @@
  
  if (isset($_POST['form_sent']))
  {
@@ -42,7 +42,7 @@
  	// Check that someone from this IP didn't register a user within the last hour (DoS prevention)
  	$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.get_remote_address().'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
  
-@@ -402,6 +404,7 @@ if (!empty($errors))
+@@ -402,6 +404,7 @@
  					</div>
  				</fieldset>
  			</div>
