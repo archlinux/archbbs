@@ -11,7 +11,7 @@ Dies ist die Nachricht:
 
 Das Thema ist unter <topic_url> zu finden
 
-Du kannst dieses Abonnement über den Link <unsubscribe_url> abbestellen.
+Du kannst dieses Abonnement Ã¼ber den Link <unsubscribe_url> abbestellen.
 
 --
 <board_mailer>
