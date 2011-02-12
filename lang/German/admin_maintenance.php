@@ -19,5 +19,6 @@ $lang_admin_maintenance = array(
 'Processing post'				=>	'Der Beitrag <strong>%s</strong> wird verarbeitet',
 'Click here'					=>	'Hier klicken',
 'Javascript redirect failed'	=>	'Die JavaScript-Weiterleitung ist fehlgeschlagen. %s um weiterzumachen …',
+'Must be integer message'		=>	'Die Anzahl der Beiträge pro Durchlauf muss ein positiver Ganzzahlwert sein.',
 
 );

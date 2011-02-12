@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -10,11 +10,11 @@ if (!defined('PUN_ROOT'))
 	exit('The constant PUN_ROOT must be defined and point to a valid FluxBB installation root directory.');
 
 // Define the version and database revision that this code was written for
-define('FORUM_VERSION', '1.4.3');
+define('FORUM_VERSION', '1.4.4');
 
 define('FORUM_DB_REVISION', 10);
-define('FORUM_SI_REVISION', 1);
-define('FORUM_PARSER_REVISION', 1);
+define('FORUM_SI_REVISION', 2);
+define('FORUM_PARSER_REVISION', 2);
 
 // Block prefetch requests
 if (isset($_SERVER['HTTP_X_MOZ']) && $_SERVER['HTTP_X_MOZ'] == 'prefetch')

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -26,8 +26,10 @@ if (isset($_GET['i_per_page']) && isset($_GET['i_start_at']))
 {
 	$per_page = intval($_GET['i_per_page']);
 	$start_at = intval($_GET['i_start_at']);
-	if ($per_page < 1 || $start_at < 1)
-		message($lang_common['Bad request']);
+
+	// Check per page is > 0
+	if ($per_page < 1)
+		message($lang_admin_maintenance['Must be integer message']);
 
 	@set_time_limit(0);
 

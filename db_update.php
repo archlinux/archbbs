@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.4.3');
+define('UPDATE_TO', '1.4.4');
 
 define('UPDATE_TO_DB_REVISION', 10);
-define('UPDATE_TO_SI_REVISION', 1);
-define('UPDATE_TO_PARSER_REVISION', 1);
+define('UPDATE_TO_SI_REVISION', 2);
+define('UPDATE_TO_PARSER_REVISION', 2);
 
-define('MIN_PHP_VERSION', '4.3.0');
+define('MIN_PHP_VERSION', '4.4.0');
 define('MIN_MYSQL_VERSION', '4.1.2');
 define('MIN_PGSQL_VERSION', '7.0.0');
 define('PUN_SEARCH_MIN_WORD', 3);
@@ -471,34 +471,6 @@ if (empty($stage))
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title><?php echo $lang_update['Update'] ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $default_style ?>.css" />
-<script type="text/javascript">
-/* <![CDATA[ */
-function process_form(the_form)
-{
-	var element_names = {
-		"req_db_pass": "<?php echo $lang_update['Database password'] ?>",
-		"req_old_charset": "<?php echo $lang_update['Current character set label'] ?>"
-	};
-	if (document.all || document.getElementById)
-	{
-		for (var i = 0; i < the_form.length; ++i)
-		{
-			var elem = the_form.elements[i];
-			if (elem.name && (/^req_/.test(elem.name)))
-			{
-				if (!elem.value && elem.type && (/^(?:text(?:area)?|password|file)$/i.test(elem.type)))
-				{
-					alert('"' + element_names[elem.name] + '" <?php echo $lang_update['Required field'] ?>');
-					elem.focus();
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
-/* ]]> */
-</script>
 </head>
 <body onload="document.getElementById('install').req_db_type.focus();document.getElementById('install').start.disabled=false;">
 
@@ -519,7 +491,7 @@ function process_form(the_form)
 <div class="blockform">
 	<h2><span><?php echo $lang_update['Update'] ?></span></h2>
 	<div class="box">
-		<form method="post" action="db_update.php" onsubmit="this.start.disabled=true;if(process_form(this)){return true;}else{this.start.disabled=false;return false;}">
+		<form method="post" action="db_update.php">
 			<input type="hidden" name="stage" value="start" />
 			<div class="inform">
 				<fieldset>
@@ -1114,7 +1086,7 @@ switch ($stage)
 			$db->query('UPDATE '.$db->prefix.'config SET conf_value = \''.$db->escape($default_style).'\' WHERE conf_name = \'o_default_style\'') or error('Unable to update default style config', __FILE__, __LINE__, $db->error());
 
 		// Should we do charset conversion or not?
-		if (strpos($cur_version, '1.2') === 0 && isset($_GET['convert_charset']))
+		if (strpos($cur_version, '1.2') === 0 && isset($_POST['convert_charset']))
 			$query_str = '?stage=conv_bans&req_old_charset='.$old_charset;
 
 		break;
@@ -1489,7 +1461,7 @@ switch ($stage)
 				else if (preg_match('/(?:\[\/?(?:b|u|s|ins|del|em|i|h|colou?r|quote|code|img|url|email|list|\*)\]|\[(?:img|url|quote|list)=)/i', $username))
 					$errors[$id][] = $lang_update['Username BBCode error'];
 
-				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(preg_replace('/[^\w]/', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 				if ($db->num_rows($result))
 				{

@@ -59,9 +59,9 @@ $lang_profile = array(
 'Avatar desc'					=>	'Ein Avatar ist ein kleines Bild, das unter deinem Benutzernamen in deinen Beiträgen angezeigt wird. Avatare dürfen nicht größer sein als',
 'Upload avatar'					=>	'Avatar hochladen',
 'Upload avatar legend'			=>	'Gib eine Avatar-Datei zum Hochladen an',
-'Delete avatar'					=>	'Avatar löschen',	// nur für Administratoren
+'Delete avatar'					=>	'Avatar löschen', // nur für Administratoren
 'File'							=>	'Datei',
-'Upload'						=>	'Hochladen',	// Beschriftung des Absende-Buttons
+'Upload'						=>	'Hochladen', // Beschriftung des Absende-Buttons
 
 // Formular-Prüfung
 'Forbidden title'				=>	'Der eingegebene Titel enthält ein verbotenes Wort. Bitte korrigiere dies.',
@@ -69,7 +69,7 @@ $lang_profile = array(
 
 // Profilanzeige
 'Users profile'					=>	'%s\'s Profil',
-'Username info'					=>	'Username: %s',
+'Username info'					=>	'Mitgliedsname: %s',
 'Email info'					=>	'E-Mail: %s',
 'Posts info'					=>	'Beiträge: %s',
 'Registered info'				=>	'Registriert: %s',
@@ -79,7 +79,7 @@ $lang_profile = array(
 'Show subscriptions'			=>	'Alle Abonnements anzeigen',
 'Realname'						=>	'Dein Name',
 'Location'						=>	'Wohnort',
-'Website'						=>	'Website',
+'Website'						=>	'Webseite',
 'Jabber'						=>	'Jabber',
 'ICQ'							=>	'ICQ',
 'MSN'							=>	'MSN Messenger',

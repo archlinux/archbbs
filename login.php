@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -95,7 +95,7 @@ else if ($action == 'out')
 	if (isset($pun_user['logged']))
 		$db->query('UPDATE '.$db->prefix.'users SET last_visit='.$pun_user['logged'].' WHERE id='.$pun_user['id']) or error('Unable to update user visit data', __FILE__, __LINE__, $db->error());
 
-	pun_setcookie(1, md5(uniqid(rand(), true)), time() + 31536000);
+	pun_setcookie(1, pun_hash(uniqid(rand(), true)), time() + 31536000);
 
 	redirect('index.php', $lang_login['Logout redirect']);
 }
@@ -230,10 +230,18 @@ if (!empty($_SERVER['HTTP_REFERER']))
 	if (strpos($referrer['host'], 'www.') === 0)
 		$referrer['host'] = substr($referrer['host'], 4);
 
+	// Make sure the path component exists
+	if (!isset($referrer['path']))
+		$referrer['path'] = '';
+
 	$valid = parse_url(get_base_url());
 	// Remove www subdomain if it exists
 	if (strpos($valid['host'], 'www.') === 0)
 		$valid['host'] = substr($valid['host'], 4);
+
+	// Make sure the path component exists
+	if (!isset($valid['path']))
+		$valid['path'] = '';
 
 	if ($referrer['host'] == $valid['host'] && preg_match('#^'.preg_quote($valid['path']).'/(.*?)\.php#i', $referrer['path']))
 		$redirect_url = $_SERVER['HTTP_REFERER'];

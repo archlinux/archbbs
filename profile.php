@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -1039,8 +1039,20 @@ if ($pun_user['id'] != $id &&																	// If we arent the user (i.e. edit
 	$posts_field = '';
 	if ($pun_config['o_show_post_count'] == '1' || $pun_user['is_admmod'])
 		$posts_field = forum_number_format($user['num_posts']);
-	if ($pun_user['g_search'] == '1' && $user['num_posts'] > 0)
-		$posts_field .= (($posts_field != '') ? ' - ' : '').'<a href="search.php?action=show_user_topics&amp;user_id='.$id.'">'.$lang_profile['Show topics'].'</a> - <a href="search.php?action=show_user_posts&amp;user_id='.$id.'">'.$lang_profile['Show posts'].'</a>';
+	if ($pun_user['g_search'] == '1')
+	{
+		$quick_searches = array();
+		if ($user['num_posts'] > 0)
+		{
+			$quick_searches[] = '<a href="search.php?action=show_user_topics&amp;user_id='.$id.'">'.$lang_profile['Show topics'].'</a>';
+			$quick_searches[] = '<a href="search.php?action=show_user_posts&amp;user_id='.$id.'">'.$lang_profile['Show posts'].'</a>';
+		}
+		if ($pun_user['is_admmod'] && $pun_config['o_topic_subscriptions'] == '1')
+			$quick_searches[] = '<a href="search.php?action=show_subscriptions&amp;user_id='.$id.'">'.$lang_profile['Show subscriptions'].'</a>';
+		
+		if (!empty($quick_searches))
+			$posts_field .= (($posts_field != '') ? ' - ' : '').implode(' - ', $quick_searches);
+	}
 	if ($posts_field != '')
 	{
 		$user_activity[] = '<dt>'.$lang_common['Posts'].'</dt>';

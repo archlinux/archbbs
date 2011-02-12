@@ -1,5 +1,5 @@
---- post.php	2011-01-22 21:57:40.000000000 +0100
-+++ post.php	2011-01-23 12:06:00.669960234 +0100
+--- post.php	2011-02-02 16:21:27.000000000 +0100
++++ post.php	2011-02-12 11:51:23.013581952 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -16,7 +16,7 @@
  	// Make sure form_user is correct
  	if (($pun_user['is_guest'] && $_POST['form_user'] != 'Guest') || (!$pun_user['is_guest'] && $_POST['form_user'] != $pun_user['username']))
  		message($lang_common['Bad request']);
-@@ -660,6 +662,7 @@
+@@ -658,6 +660,7 @@
  
  ?>
  			</div>
@@ -24,8 +24,8 @@
  			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
  		</form>
  	</div>
---- register.php	2011-01-22 21:57:40.000000000 +0100
-+++ register.php	2011-01-23 12:06:00.669960234 +0100
+--- register.php	2011-02-02 16:21:27.000000000 +0100
++++ register.php	2011-02-12 11:51:23.013581952 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');

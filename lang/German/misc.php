@@ -88,6 +88,6 @@ $lang_misc = array(
 // Hostinformationen
 'Host info 1'					=>	'Die IP-Adresse ist: %s',
 'Host info 2'					=>	'Der Hostname ist: %s',
-'Show more users'		        =>	'Weitere Mitglieder mit dieser IP anzeigen',
+'Show more users'				=>	'Weitere Mitglieder mit dieser IP anzeigen',
 
 );

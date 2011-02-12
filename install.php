@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 // The FluxBB version this script installs
-define('FORUM_VERSION', '1.4.3');
+define('FORUM_VERSION', '1.4.4');
 
 define('FORUM_DB_REVISION', 10);
-define('FORUM_SI_REVISION', 1);
-define('FORUM_PARSER_REVISION', 1);
+define('FORUM_SI_REVISION', 2);
+define('FORUM_PARSER_REVISION', 2);
 
-define('MIN_PHP_VERSION', '4.3.0');
+define('MIN_PHP_VERSION', '4.4.0');
 define('MIN_MYSQL_VERSION', '4.1.2');
 define('MIN_PGSQL_VERSION', '7.0.0');
 define('PUN_SEARCH_MIN_WORD', 3);
@@ -47,6 +47,10 @@ if (file_exists(PUN_ROOT.'config.php'))
 
 // Define PUN because email.php requires it
 define('PUN', 1);
+
+// If the cache directory is not specified, we use the default setting
+if (!defined('FORUM_CACHE_DIR'))
+	define('FORUM_CACHE_DIR', PUN_ROOT.'cache/');
 
 // Make sure we are running at least MIN_PHP_VERSION
 if (!function_exists('version_compare') || version_compare(PHP_VERSION, MIN_PHP_VERSION, '<'))
@@ -197,6 +201,14 @@ else
 	if (!in_array($default_style, $styles))
 		$alerts[] = $lang_install['Error default style'];
 }
+
+// Check if the cache directory is writable
+if (!@is_writable(FORUM_CACHE_DIR))
+	$alerts[] = sprintf($lang_install['Alert cache'], FORUM_CACHE_DIR);
+
+// Check if default avatar directory is writable
+if (!@is_writable(PUN_ROOT.'img/avatars/'))
+	$alerts[] = sprintf($lang_install['Alert avatar'], PUN_ROOT.'img/avatars/');
 
 if (!isset($_POST['form_sent']) || !empty($alerts))
 {
@@ -1679,13 +1691,6 @@ else
 
 
 	$alerts = array();
-	// Check if the cache directory is writable
-	if (!@is_writable(PUN_ROOT.'cache/'))
-		$alerts[] = $lang_install['Alert cache'];
-
-	// Check if default avatar directory is writable
-	if (!@is_writable(PUN_ROOT.'img/avatars/'))
-		$alerts[] = $lang_install['Alert avatar'];
 
 	// Check if we disabled uploading avatars because file_uploads was disabled
 	if ($avatars == '0')

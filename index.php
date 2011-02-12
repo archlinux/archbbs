@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2010 FluxBB
+ * Copyright (C) 2008-2011 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -33,6 +33,12 @@ if ($pun_config['o_feed_type'] == '1')
 	$page_head = array('feed' => '<link rel="alternate" type="application/rss+xml" href="extern.php?action=feed&amp;type=rss" title="'.$lang_common['RSS active topics feed'].'" />');
 else if ($pun_config['o_feed_type'] == '2')
 	$page_head = array('feed' => '<link rel="alternate" type="application/atom+xml" href="extern.php?action=feed&amp;type=atom" title="'.$lang_common['Atom active topics feed'].'" />');
+
+$forum_actions = array();
+
+// Display a "mark all as read" link
+if (!$pun_user['is_guest'])
+	$forum_actions[] = '<a href="misc.php?action=markread">'.$lang_common['Mark all as read'].'</a>';
 
 $page_title = array(pun_htmlspecialchars($pun_config['o_board_title']));
 define('PUN_ALLOW_INDEX', 1);
@@ -180,6 +186,19 @@ if ($pun_user['g_view_users'] == '1')
 	$stats['newest_user'] = '<a href="profile.php?id='.$stats['last_user']['id'].'">'.pun_htmlspecialchars($stats['last_user']['username']).'</a>';
 else
 	$stats['newest_user'] = pun_htmlspecialchars($stats['last_user']['username']);
+
+if (!empty($forum_actions))
+{
+
+?>
+<div class="linksb">
+	<div class="inbox crumbsplus">
+		<p class="subscribelink clearb"><?php echo implode(' - ', $forum_actions); ?></p>
+	</div>
+</div>
+<?php
+
+}
 
 ?>
 <div id="brdstats" class="block">
