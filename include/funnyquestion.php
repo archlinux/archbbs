@@ -42,7 +42,7 @@ function has_funnycookie()
 
 function get_funnyquestion()
 {
-	global $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $pun_user, $funnyquestion_remember;
+	global $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $lang_common, $pun_user, $funnyquestion_remember;
 
 	if (!$pun_user['is_guest'] || has_funnycookie()) {
 		return '';
@@ -60,7 +60,7 @@ function get_funnyquestion()
 					<input type="hidden" name="funnyquestion_time" value="'.$time.'" />
 					<input type="hidden" name="funnyquestion_hash" value="'.$hash.'" />
 					<label class="required">
-						<strong>'.$question.'<span>'.$lang_common['Required'].'></span></strong><br />
+						<strong>'.$question.'<span>'.$lang_common['Required'].'</span></strong><br />
 						<input type="text" name="funny_answer" value="" size="50" /><br />
 					</label>
 				</div>
@@ -110,4 +110,3 @@ function check_funnyquestion()
 }
 
 ?>
-
