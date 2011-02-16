@@ -16,7 +16,7 @@ $lang_post = array(
 'Post errors'		=>	'Versandfehler',
 'Post errors info'	=>	'Die folgenden Fehler müssen korrigiert werden, bevor der Beitrag gespeichert werden kann:',
 'Post preview'		=>	'Vorschau des Beitrags',
-'Guest name'		=>	'Name', // Fuer Gäste (anstatt Benutzername)
+'Guest name'		=>	'Name', // Für Gäste (anstatt Mitgliedsname)
 'Post redirect'		=>	'Beitrag gespeichert. Leite weiter …',
 'Post a reply'		=>	'Eine Antwort schreiben',
 'Post new topic'	=>	'Neues Thema erstellen',
@@ -26,7 +26,7 @@ $lang_post = array(
 'Topic review'		=>	'Themen-Übersicht (Neuester Beitrag zuerst)',
 'Flood start'		=>	'Es müssen mindestens',
 'flood end'			=>	'Sekunden zwischen zwei Beiträgen vergangen sein. Bitte warte etwas und versuche es dann erneut.',
-'Preview'			=>	'Vorschau', // Beschriftung des Absende-Button fuer die Nachrichtenvorschau
+'Preview'			=>	'Vorschau', // Beschriftung des Absende-Button für die Nachrichtenvorschau
 
 // Beitrag bearbeiten
 'Edit post legend'	=>	'Ändere den Beitrag und speichere die Änderungen',

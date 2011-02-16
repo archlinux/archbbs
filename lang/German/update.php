@@ -49,7 +49,7 @@ $lang_update = array(
 'Preparsing item'				=>	'Verarbeite %1$s %2$s …',
 'Rebuilding index item'			=>	'Erstelle den Index für %1$s %2$s neu',
 
-'ban'							=>	'Bann',
+'ban'							=>	'Mitgliedssperre',
 'categories'					=>	'Kategorien',
 'censor words'					=>	'Zensierte Wörter',
 'configuration'					=>	'Konfiguration',
