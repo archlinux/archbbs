@@ -174,10 +174,10 @@ function authenticate_user($user, $password, $password_is_hash = false)
 //
 function get_current_url($max_length = 0)
 {
-	$protocol = (!isset($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off') ? 'http://' : 'https://';
-	$port = (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'] != '80' && $protocol == 'http://') || ($_SERVER['SERVER_PORT'] != '443' && $protocol == 'https://')) && strpos($_SERVER['HTTP_HOST'], ':') === false) ? ':'.$_SERVER['SERVER_PORT'] : '';
+	$protocol = get_current_protocol();
+	$port = (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'] != '80' && $protocol == 'http') || ($_SERVER['SERVER_PORT'] != '443' && $protocol == 'https')) && strpos($_SERVER['HTTP_HOST'], ':') === false) ? ':'.$_SERVER['SERVER_PORT'] : '';
 
-	$url = urldecode($protocol.$_SERVER['HTTP_HOST'].$port.$_SERVER['REQUEST_URI']);
+	$url = urldecode($protocol.'://'.$_SERVER['HTTP_HOST'].$port.$_SERVER['REQUEST_URI']);
 
 	if (strlen($url) <= $max_length || $max_length == 0)
 		return $url;
@@ -186,6 +186,32 @@ function get_current_url($max_length = 0)
 	return null;
 }
 
+
+//
+// Fetch the current protocol in use - http or https
+//
+function get_current_protocol()
+{
+	$protocol = 'http';
+
+	// Check if the server is claiming to using HTTPS
+	if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off')
+		$protocol = 'https';
+
+	// If we are behind a reverse proxy try to decide which protocol it is using
+	if (defined('FORUM_BEHIND_REVERSE_PROXY'))
+	{
+		// Check if we are behind a Microsoft based reverse proxy
+		if (!empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) != 'off')
+			$protocol = 'https';
+
+		// Check if we're behind a "proper" reverse proxy, and what protocol it's using
+		if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']))
+			$protocol = strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']);
+	}
+
+	return $protocol;
+}
 
 //
 // Fetch the base_url, optionally support HTTPS and HTTP
@@ -201,8 +227,7 @@ function get_base_url($support_https = false)
 	if (!isset($base_url))
 	{
 		// Make sure we are using the correct protocol
-		$protocol = (!isset($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off') ? 'http://' : 'https://';
-		$base_url = str_replace(array('http://', 'https://'), $protocol, $pun_config['o_base_url']);
+		$base_url = str_replace(array('http://', 'https://'), get_current_protocol().'://', $pun_config['o_base_url']);
 	}
 
 	return $base_url;
@@ -270,7 +295,7 @@ function forum_hmac($data, $key, $raw_output = false)
 
 	// If key size more than blocksize then we hash it once
 	if (strlen($key) > 64)
-		$key = sha1($key, true); // we have to use raw output here to match the standard
+		$key = pack('H*', sha1($key)); // we have to use raw output here to match the standard
 
 	// Ensure we're padded to exactly one block boundary
 	$key = str_pad($key, 64, chr(0x00));
@@ -285,7 +310,13 @@ function forum_hmac($data, $key, $raw_output = false)
 	}
 
 	// Finally, calculate the HMAC
-	return sha1($hmac_opad.sha1($hmac_ipad.$data, true), $raw_output);
+	$hash = sha1($hmac_opad.pack('H*', sha1($hmac_ipad.$data)));
+
+	// If we want raw output then we need to pack the final result
+	if ($raw_output)
+		$hash = pack('H*', $hash);
+
+	return $hash;
 }
 
 
@@ -325,8 +356,8 @@ function check_bans()
 {
 	global $db, $pun_config, $lang_common, $pun_user, $pun_bans;
 
-	// Admins aren't affected
-	if ($pun_user['g_id'] == PUN_ADMIN || !$pun_bans)
+	// Admins and moderators aren't affected
+	if ($pun_user['is_admmod'] || !$pun_bans)
 		return;
 
 	// Add a dot or a colon (depending on IPv4/IPv6) at the end of the IP address to prevent banned address
@@ -420,7 +451,7 @@ function check_username($username, $exclude_id = null)
 	// Check that the username (or a too similar username) is not already registered
 	$query = ($exclude_id) ? ' AND id!='.$exclude_id : '';
 
-	$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1'.$query) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+	$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(ucp_preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1'.$query) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 	if ($db->num_rows($result))
 	{
@@ -468,65 +499,6 @@ function update_users_online()
 				$db->query('UPDATE '.$db->prefix.'online SET idle=1 WHERE user_id='.$cur_user['user_id']) or error('Unable to insert into online list', __FILE__, __LINE__, $db->error());
 		}
 	}
-}
-
-
-//
-// Generate the "navigator" that appears at the top of every page
-//
-function generate_navlinks()
-{
-	global $pun_config, $lang_common, $pun_user;
-
-	// Index and Userlist should always be displayed
-	$links[] = '<li id="navindex"'.((PUN_ACTIVE_PAGE == 'index') ? ' class="isactive"' : '').'><a href="index.php">'.$lang_common['Index'].'</a></li>';
-
-	if ($pun_user['g_read_board'] == '1' && $pun_user['g_view_users'] == '1')
-		$links[] = '<li id="navuserlist"'.((PUN_ACTIVE_PAGE == 'userlist') ? ' class="isactive"' : '').'><a href="userlist.php">'.$lang_common['User list'].'</a></li>';
-
-	if ($pun_config['o_rules'] == '1' && (!$pun_user['is_guest'] || $pun_user['g_read_board'] == '1' || $pun_config['o_regs_allow'] == '1'))
-		$links[] = '<li id="navrules"'.((PUN_ACTIVE_PAGE == 'rules') ? ' class="isactive"' : '').'><a href="misc.php?action=rules">'.$lang_common['Rules'].'</a></li>';
-
-	if ($pun_user['is_guest'])
-	{
-		if ($pun_user['g_read_board'] == '1' && $pun_user['g_search'] == '1')
-			$links[] = '<li id="navsearch"'.((PUN_ACTIVE_PAGE == 'search') ? ' class="isactive"' : '').'><a href="search.php">'.$lang_common['Search'].'</a></li>';
-
-		$links[] = '<li id="navregister"'.((PUN_ACTIVE_PAGE == 'register') ? ' class="isactive"' : '').'><a href="register.php">'.$lang_common['Register'].'</a></li>';
-		$links[] = '<li id="navlogin"'.((PUN_ACTIVE_PAGE == 'login') ? ' class="isactive"' : '').'><a href="login.php">'.$lang_common['Login'].'</a></li>';
-	}
-	else
-	{
-		if (!$pun_user['is_admmod'])
-		{
-			if ($pun_user['g_read_board'] == '1' && $pun_user['g_search'] == '1')
-				$links[] = '<li id="navsearch"'.((PUN_ACTIVE_PAGE == 'search') ? ' class="isactive"' : '').'><a href="search.php">'.$lang_common['Search'].'</a></li>';
-
-			$links[] = '<li id="navprofile"'.((PUN_ACTIVE_PAGE == 'profile') ? ' class="isactive"' : '').'><a href="profile.php?id='.$pun_user['id'].'">'.$lang_common['Profile'].'</a></li>';
-			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.pun_hash($pun_user['id'].pun_hash(get_remote_address())).'">'.$lang_common['Logout'].'</a></li>';
-		}
-		else
-		{
-			$links[] = '<li id="navsearch"'.((PUN_ACTIVE_PAGE == 'search') ? ' class="isactive"' : '').'><a href="search.php">'.$lang_common['Search'].'</a></li>';
-			$links[] = '<li id="navprofile"'.((PUN_ACTIVE_PAGE == 'profile') ? ' class="isactive"' : '').'><a href="profile.php?id='.$pun_user['id'].'">'.$lang_common['Profile'].'</a></li>';
-			$links[] = '<li id="navadmin"'.((PUN_ACTIVE_PAGE == 'admin') ? ' class="isactive"' : '').'><a href="admin_index.php">'.$lang_common['Admin'].'</a></li>';
-			$links[] = '<li id="navlogout"><a href="login.php?action=out&amp;id='.$pun_user['id'].'&amp;csrf_token='.pun_hash($pun_user['id'].pun_hash(get_remote_address())).'">'.$lang_common['Logout'].'</a></li>';
-		}
-	}
-
-	// Are there any additional navlinks we should insert into the array before imploding it?
-	if ($pun_user['g_read_board'] == '1' && $pun_config['o_additional_navlinks'] != '')
-	{
-		if (preg_match_all('#([0-9]+)\s*=\s*(.*?)\n#s', $pun_config['o_additional_navlinks']."\n", $extra_links))
-		{
-			// Insert any additional links into the $links array (at the correct index)
-			$num_links = count($extra_links[1]);
-			for ($i = 0; $i < $num_links; ++$i)
-				array_splice($links, $extra_links[1][$i], 0, array('<li id="navextra'.($i + 1).'">'.$extra_links[2][$i].'</li>'));
-		}
-	}
-
-	return '<ul>'."\n\t\t\t\t".implode("\n\t\t\t\t", $links)."\n\t\t\t".'</ul>';
 }
 
 
@@ -623,10 +595,10 @@ function set_tracked_topics($tracked_topics)
 		foreach ($tracked_topics['forums'] as $id => $timestamp)
 			$cookie_data .= 'f'.$id.'='.$timestamp.';';
 
-		// Enforce a 4048 byte size limit (4096 minus some space for the cookie name)
-		if (strlen($cookie_data) > 4048)
+		// Enforce a byte size limit (4096 minus some space for the cookie name - defaults to 4048)
+		if (strlen($cookie_data) > FORUM_MAX_COOKIE_SIZE)
 		{
-			$cookie_data = substr($cookie_data, 0, 4048);
+			$cookie_data = substr($cookie_data, 0, FORUM_MAX_COOKIE_SIZE);
 			$cookie_data = substr($cookie_data, 0, strrpos($cookie_data, ';')).';';
 		}
 	}
@@ -814,7 +786,7 @@ function censor_words($text)
 	}
 
 	if (!empty($search_for))
-		$text = substr(preg_replace($search_for, $replace_with, ' '.$text.' '), 1, -1);
+		$text = substr(ucp_preg_replace($search_for, $replace_with, ' '.$text.' '), 1, -1);
 
 	return $text;
 }
@@ -1058,26 +1030,6 @@ function random_key($len, $readable = false, $hash = false)
 
 
 //
-// If we are running pre PHP 4.3.0, we add our own implementation of file_get_contents
-//
-if (!function_exists('file_get_contents'))
-{
-	function file_get_contents($filename, $use_include_path = 0)
-	{
-		$data = '';
-
-		if ($fh = fopen($filename, 'rb', $use_include_path))
-		{
-			$data = fread($fh, filesize($filename));
-			fclose($fh);
-		}
-
-		return $data;
-	}
-}
-
-
-//
 // Make sure that HTTP_REFERER matches base_url/script
 //
 function confirm_referrer($script, $error_msg = false)
@@ -1128,7 +1080,23 @@ function pun_hash($str)
 //
 function get_remote_address()
 {
-	return $_SERVER['REMOTE_ADDR'];
+	$remote_addr = $_SERVER['REMOTE_ADDR'];
+
+	// If we are behind a reverse proxy try to find the real users IP
+	if (defined('FORUM_BEHIND_REVERSE_PROXY'))
+	{
+		if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+		{
+			// The general format of the field is:
+			// X-Forwarded-For: client1, proxy1, proxy2
+			// where the value is a comma+space separated list of IP addresses, the left-most being the farthest downstream client,
+			// and each successive proxy that passed the request adding the IP address where it received the request from.
+			$remote_addr = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+			$remote_addr = trim($remote_addr[0]);
+		}
+	}
+
+	return $remote_addr;
 }
 
 
@@ -1228,11 +1196,19 @@ function maintenance_message()
 {
 	global $db, $pun_config, $lang_common, $pun_user;
 
+	// Send no-cache headers
+	header('Expires: Thu, 21 Jul 1977 07:30:00 GMT'); // When yours truly first set eyes on this world! :)
+	header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
+	header('Cache-Control: post-check=0, pre-check=0', false);
+	header('Pragma: no-cache'); // For HTTP/1.0 compatibility
+
+	// Send the Content-type header in case the web server is setup to send something else
+	header('Content-type: text/html; charset=utf-8');
+
 	// Deal with newlines, tabs and multiple spaces
 	$pattern = array("\t", '  ', '  ');
 	$replace = array('&#160; &#160; ', '&#160; ', ' &#160;');
 	$message = str_replace($pattern, $replace, $pun_config['o_maintenance_message']);
-
 
 	if (file_exists(PUN_ROOT.'style/'.$pun_user['style'].'/maintenance.tpl'))
 	{
@@ -1665,7 +1641,7 @@ function remove_bad_characters($array)
 //
 function file_size($size)
 {
-	$units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
+	$units = array('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB');
 
 	for ($i = 0; $size > 1024; $i++)
 		$size /= 1024;
@@ -1719,6 +1695,27 @@ function forum_list_langs()
 	natcasesort($languages);
 
 	return $languages;
+}
+
+
+//
+// Generate a cache ID based on the last modification time for all stopwords files
+//
+function generate_stopwords_cache_id()
+{
+	$files = glob(PUN_ROOT.'lang/*/stopwords.txt');
+	if ($files === false)
+		return 'cache_id_error';
+
+	$hash = array();
+
+	foreach ($files as $file)
+	{
+		$hash[] = $file;
+		$hash[] = filemtime($file);
+	}
+
+	return sha1(implode('|', $hash));
 }
 
 
@@ -1781,6 +1778,142 @@ function split_text($text, $start, $end, &$errors, $retab = true)
 	return array($inside, $outside);
 }
 
+//
+// function url_valid($url) {
+//
+// Return associative array of valid URI components, or FALSE if $url is not
+// RFC-3986 compliant. If the passed URL begins with: "www." or "ftp.", then
+// "http://" or "ftp://" is prepended and the corrected full-url is stored in
+// the return array with a key name "url". This value should be used by the caller.
+//
+// Return value: FALSE if $url is not valid, otherwise array of URI components:
+// e.g.
+// Given: "http://www.jmrware.com:80/articles?height=10&width=75#fragone"
+// Array(
+//	  [scheme] => http
+//	  [authority] => www.jmrware.com:80
+//	  [userinfo] =>
+//	  [host] => www.jmrware.com
+//	  [IP_literal] =>
+//	  [IPV6address] =>
+//	  [ls32] =>
+//	  [IPvFuture] =>
+//	  [IPv4address] =>
+//	  [regname] => www.jmrware.com
+//	  [port] => 80
+//	  [path_abempty] => /articles
+//	  [query] => height=10&width=75
+//	  [fragment] => fragone
+//	  [url] => http://www.jmrware.com:80/articles?height=10&width=75#fragone
+// )
+function url_valid($url)
+{
+	if (strpos($url, 'www.') === 0) $url = 'http://'. $url;
+	if (strpos($url, 'ftp.') === 0) $url = 'ftp://'. $url;
+	if (!preg_match('/# Valid absolute URI having a non-empty, valid DNS host.
+		^
+		(?P<scheme>[A-Za-z][A-Za-z0-9+\-.]*):\/\/
+		(?P<authority>
+		  (?:(?P<userinfo>(?:[A-Za-z0-9\-._~!$&\'()*+,;=:]|%[0-9A-Fa-f]{2})*)@)?
+		  (?P<host>
+			(?P<IP_literal>
+			  \[
+			  (?:
+				(?P<IPV6address>
+				  (?:												 (?:[0-9A-Fa-f]{1,4}:){6}
+				  |												   ::(?:[0-9A-Fa-f]{1,4}:){5}
+				  | (?:							 [0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){4}
+				  | (?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){3}
+				  | (?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})?::(?:[0-9A-Fa-f]{1,4}:){2}
+				  | (?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})?::	[0-9A-Fa-f]{1,4}:
+				  | (?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})?::
+				  )
+				  (?P<ls32>[0-9A-Fa-f]{1,4}:[0-9A-Fa-f]{1,4}
+				  | (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+					   (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)
+				  )
+				|	(?:(?:[0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})?::	[0-9A-Fa-f]{1,4}
+				|	(?:(?:[0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})?::
+				)
+			  | (?P<IPvFuture>[Vv][0-9A-Fa-f]+\.[A-Za-z0-9\-._~!$&\'()*+,;=:]+)
+			  )
+			  \]
+			)
+		  | (?P<IPv4address>(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+							   (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))
+		  | (?P<regname>(?:[A-Za-z0-9\-._~!$&\'()*+,;=]|%[0-9A-Fa-f]{2})+)
+		  )
+		  (?::(?P<port>[0-9]*))?
+		)
+		(?P<path_abempty>(?:\/(?:[A-Za-z0-9\-._~!$&\'()*+,;=:@]|%[0-9A-Fa-f]{2})*)*)
+		(?:\?(?P<query>		  (?:[A-Za-z0-9\-._~!$&\'()*+,;=:@\\/?]|%[0-9A-Fa-f]{2})*))?
+		(?:\#(?P<fragment>	  (?:[A-Za-z0-9\-._~!$&\'()*+,;=:@\\/?]|%[0-9A-Fa-f]{2})*))?
+		$
+		/mx', $url, $m)) return FALSE;
+	switch ($m['scheme'])
+	{
+	case 'https':
+	case 'http':
+		if ($m['userinfo']) return FALSE; // HTTP scheme does not allow userinfo.
+		break;
+	case 'ftps':
+	case 'ftp':
+		break;
+	default:
+		return FALSE;	// Unrecognised URI scheme. Default to FALSE.
+	}
+	// Validate host name conforms to DNS "dot-separated-parts".
+	if ($m{'regname'}) // If host regname specified, check for DNS conformance.
+	{
+		if (!preg_match('/# HTTP DNS host name.
+			^					   # Anchor to beginning of string.
+			(?!.{256})			   # Overall host length is less than 256 chars.
+			(?:					   # Group dot separated host part alternatives.
+			  [0-9A-Za-z]\.		   # Either a single alphanum followed by dot
+			|					   # or... part has more than one char (63 chars max).
+			  [0-9A-Za-z]		   # Part first char is alphanum (no dash).
+			  [\-0-9A-Za-z]{0,61}  # Internal chars are alphanum plus dash.
+			  [0-9A-Za-z]		   # Part last char is alphanum (no dash).
+			  \.				   # Each part followed by literal dot.
+			)*					   # One or more parts before top level domain.
+			(?:					   # Explicitly specify top level domains.
+			  com|edu|gov|int|mil|net|org|biz|
+			  info|name|pro|aero|coop|museum|
+			  asia|cat|jobs|mobi|tel|travel|
+			  [A-Za-z]{2})		   # Country codes are exqactly two alpha chars.
+			$					   # Anchor to end of string.
+			/ix', $m['host'])) return FALSE;
+	}
+	$m['url'] = $url;
+	for ($i = 0; isset($m[$i]); ++$i) unset($m[$i]);
+	return $m; // return TRUE == array of useful named $matches plus the valid $url.
+}
+
+//
+// Replace string matching regular expression
+//
+// This function takes care of possibly disabled unicode properties in PCRE builds
+//
+function ucp_preg_replace($pattern, $replace, $subject)
+{
+	$replaced = preg_replace($pattern, $replace, $subject);
+	
+	// If preg_replace() returns false, this probably means unicode support is not built-in, so we need to modify the pattern a little
+	if ($replaced === false)
+	{
+		if (is_array($pattern))
+		{
+			foreach ($pattern as $cur_key => $cur_pattern)
+				$pattern[$cur_key] = str_replace('\p{L}\p{N}', '\w', $cur_pattern);
+			
+			$replaced = preg_replace($pattern, $replace, $subject);
+		}
+		else
+			$replaced = preg_replace(str_replace('\p{L}\p{N}', '\w', $pattern), $replace, $subject);
+	}
+	
+	return $replaced;
+}
 
 // DEBUG FUNCTIONS BELOW
 

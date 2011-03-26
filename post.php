@@ -74,8 +74,13 @@ if (isset($_POST['form_sent']))
 	{
 		$subject = pun_trim($_POST['req_subject']);
 
+		if ($pun_config['o_censoring'] == '1')
+			$censored_subject = pun_trim(censor_words($subject));
+
 		if ($subject == '')
 			$errors[] = $lang_post['No subject'];
+		else if ($pun_config['o_censoring'] == '1' && $censored_subject == '')
+			$errors[] = $lang_post['No subject after censoring'];
 		else if (pun_strlen($subject) > 70)
 			$errors[] = $lang_post['Too long subject'];
 		else if ($pun_config['p_subject_all_caps'] == '0' && is_all_uppercase($subject) && !$pun_user['is_admmod'])
@@ -137,8 +142,19 @@ if (isset($_POST['form_sent']))
 		$message = preparse_bbcode($message, $errors);
 	}
 
-	if (empty($errors) && $message == '')
-		$errors[] = $lang_post['No message'];
+	if (empty($errors))
+	{
+		if ($message == '')
+			$errors[] = $lang_post['No message'];
+		else if ($pun_config['o_censoring'] == '1')
+		{
+			// Censor message to see if that causes problems
+			$censored_message = pun_trim(censor_words($message));
+
+			if ($censored_message == '')
+				$errors[] = $lang_post['No message after censoring'];
+		}
+	}
 
 	$hide_smilies = isset($_POST['hide_smilies']) ? '1' : '0';
 	$subscribe = isset($_POST['subscribe']) ? '1' : '0';
@@ -238,7 +254,7 @@ if (isset($_POST['form_sent']))
 								$mail_subject_full = str_replace('<topic_subject>', $cur_posting['subject'], $mail_subject_full);
 								$mail_message_full = str_replace('<topic_subject>', $cur_posting['subject'], $mail_message_full);
 								$mail_message_full = str_replace('<replier>', $username, $mail_message_full);
-								$mail_message_full = str_replace('<message>', $message, $mail_message_full);
+								$mail_message_full = str_replace('<message>', $pun_config['o_censoring'] == '1' ? $censored_message : $message, $mail_message_full);
 								$mail_message_full = str_replace('<post_url>', get_base_url().'/viewtopic.php?pid='.$new_pid.'#p'.$new_pid, $mail_message_full);
 								$mail_message_full = str_replace('<unsubscribe_url>', get_base_url().'/misc.php?action=unsubscribe&tid='.$tid, $mail_message_full);
 								$mail_message_full = str_replace('<board_mailer>', $pun_config['o_board_title'].' '.$lang_common['Mailer'], $mail_message_full);
@@ -330,7 +346,7 @@ if (isset($_POST['form_sent']))
 								$mail_message_full = trim(substr($mail_tpl_full, $first_crlf));
 
 								$mail_subject = str_replace('<forum_name>', $cur_posting['forum_name'], $mail_subject);
-								$mail_message = str_replace('<topic_subject>', $subject, $mail_message);
+								$mail_message = str_replace('<topic_subject>', $pun_config['o_censoring'] == '1' ? $censored_subject : $subject, $mail_message);
 								$mail_message = str_replace('<forum_name>', $cur_posting['forum_name'], $mail_message);
 								$mail_message = str_replace('<poster>', $username, $mail_message);
 								$mail_message = str_replace('<topic_url>', get_base_url().'/viewtopic.php?id='.$new_tid, $mail_message);
@@ -338,10 +354,10 @@ if (isset($_POST['form_sent']))
 								$mail_message = str_replace('<board_mailer>', $pun_config['o_board_title'].' '.$lang_common['Mailer'], $mail_message);
 
 								$mail_subject_full = str_replace('<forum_name>', $cur_posting['forum_name'], $mail_subject_full);
-								$mail_message_full = str_replace('<topic_subject>', $subject, $mail_message_full);
+								$mail_message_full = str_replace('<topic_subject>', $pun_config['o_censoring'] == '1' ? $censored_subject : $subject, $mail_message_full);
 								$mail_message_full = str_replace('<forum_name>', $cur_posting['forum_name'], $mail_message_full);
 								$mail_message_full = str_replace('<poster>', $username, $mail_message_full);
-								$mail_message_full = str_replace('<message>', $message, $mail_message_full);
+								$mail_message_full = str_replace('<message>', $pun_config['o_censoring'] == '1' ? $censored_message : $message, $mail_message_full);
 								$mail_message_full = str_replace('<topic_url>', get_base_url().'/viewtopic.php?id='.$new_tid, $mail_message_full);
 								$mail_message_full = str_replace('<unsubscribe_url>', get_base_url().'/misc.php?action=unsubscribe&fid='.$cur_posting['id'], $mail_message_full);
 								$mail_message_full = str_replace('<board_mailer>', $pun_config['o_board_title'].' '.$lang_common['Mailer'], $mail_message_full);
@@ -604,7 +620,7 @@ if ($fid): ?>
 						<textarea name="req_message" rows="20" cols="95" tabindex="<?php echo $cur_index++ ?>"><?php echo isset($_POST['req_message']) ? pun_htmlspecialchars($orig_message) : (isset($quote) ? $quote : ''); ?></textarea><br /></label>
 						<ul class="bblinks">
 							<li><span><a href="help.php#bbcode" onclick="window.open(this.href); return false;"><?php echo $lang_common['BBCode'] ?></a> <?php echo ($pun_config['p_message_bbcode'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
-							<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_message_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
+							<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_message_bbcode'] == '1' && $pun_config['p_message_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 							<li><span><a href="help.php#smilies" onclick="window.open(this.href); return false;"><?php echo $lang_common['Smilies'] ?></a> <?php echo ($pun_config['o_smilies'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 						</ul>
 					</div>

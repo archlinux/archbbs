@@ -119,8 +119,9 @@ function output_rss($feed)
 	header('Pragma: public');
 
 	echo '<?xml version="1.0" encoding="utf-8"?>'."\n";
-	echo '<rss version="2.0">'."\n";
+	echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'."\n";
 	echo "\t".'<channel>'."\n";
+	echo "\t\t".'<atom:link href="'.pun_htmlspecialchars(get_current_url()).'" rel="self" type="application/rss+xml" />'."\n";
 	echo "\t\t".'<title><![CDATA['.escape_cdata($feed['title']).']]></title>'."\n";
 	echo "\t\t".'<link>'.pun_htmlspecialchars($feed['link']).'</link>'."\n";
 	echo "\t\t".'<description><![CDATA['.escape_cdata($feed['description']).']]></description>'."\n";
@@ -381,46 +382,88 @@ if ($action == 'feed')
 				$forum_sql .= ' AND t.forum_id NOT IN('.implode(',', $nfids).')';
 		}
 
-		// Setup the feed
-		$feed = array(
-			'title' 		=>	$pun_config['o_board_title'].$forum_name,
-			'link'			=>	get_base_url(true).'/index.php',
-			'description'	=>	sprintf($lang_common['RSS description'], $pun_config['o_board_title']),
-			'items'			=>	array(),
-			'type'			=>	'topics'
-		);
+		// Only attempt to cache if caching is enabled and we have all or a single forum
+		if ($pun_config['o_feed_ttl'] > 0 && ($forum_sql == '' || ($forum_name != '' && !isset($_GET['nfid']))))
+			$cache_id = 'feed'.sha1($pun_user['g_id'].'|'.$lang_common['lang_identifier'].'|'.($order_posted ? '1' : '0').($forum_name == '' ? '' : '|'.$fids[0]));
 
-		// Fetch $show topics
-		$result = $db->query('SELECT t.id, t.poster, t.subject, t.posted, t.last_post, t.last_poster, p.message, p.hide_smilies, u.email_setting, u.email, p.poster_id, p.poster_email FROM '.$db->prefix.'topics AS t INNER JOIN '.$db->prefix.'posts AS p ON p.id='.($order_posted ? 't.first_post_id' : 't.last_post_id').' INNER JOIN '.$db->prefix.'users AS u ON u.id=p.poster_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=t.forum_id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND t.moved_to IS NULL'.$forum_sql.' ORDER BY '.($order_posted ? 't.posted' : 't.last_post').' DESC LIMIT '.$show) or error('Unable to fetch topic info', __FILE__, __LINE__, $db->error());
-		while ($cur_topic = $db->fetch_assoc($result))
+		// Load cached feed
+		if (isset($cache_id) && file_exists(FORUM_CACHE_DIR.'cache_'.$cache_id.'.php'))
+			include FORUM_CACHE_DIR.'cache_'.$cache_id.'.php';
+
+		$now = time();
+		if (!isset($feed) || $cache_expire < $now)
 		{
-			if ($pun_config['o_censoring'] == '1')
-				$cur_topic['subject'] = censor_words($cur_topic['subject']);
-
-			$cur_topic['message'] = parse_message($cur_topic['message'], $cur_topic['hide_smilies']);
-
-			$item = array(
-				'id'			=>	$cur_topic['id'],
-				'title'			=>	$cur_topic['subject'],
-				'link'			=>	get_base_url(true).'/viewtopic.php?id='.$cur_topic['id'].($order_posted ? '' : '&action=new'),
-				'description'	=>	$cur_topic['message'],
-				'author'		=>	array(
-					'name'	=> $order_posted ? $cur_topic['poster'] : $cur_topic['last_poster']
-				),
-				'pubdate'		=>	$order_posted ? $cur_topic['posted'] : $cur_topic['last_post']
+			// Setup the feed
+			$feed = array(
+				'title' 		=>	$pun_config['o_board_title'].$forum_name,
+				'link'			=>	'/index.php',
+				'description'	=>	sprintf($lang_common['RSS description'], $pun_config['o_board_title']),
+				'items'			=>	array(),
+				'type'			=>	'topics'
 			);
 
-			if ($cur_topic['poster_id'] > 1)
+			// Fetch $show topics
+			$result = $db->query('SELECT t.id, t.poster, t.subject, t.posted, t.last_post, t.last_poster, p.message, p.hide_smilies, u.email_setting, u.email, p.poster_id, p.poster_email FROM '.$db->prefix.'topics AS t INNER JOIN '.$db->prefix.'posts AS p ON p.id='.($order_posted ? 't.first_post_id' : 't.last_post_id').' INNER JOIN '.$db->prefix.'users AS u ON u.id=p.poster_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=t.forum_id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND t.moved_to IS NULL'.$forum_sql.' ORDER BY '.($order_posted ? 't.posted' : 't.last_post').' DESC LIMIT '.(isset($cache_id) ? 50 : $show)) or error('Unable to fetch topic info', __FILE__, __LINE__, $db->error());
+			while ($cur_topic = $db->fetch_assoc($result))
 			{
-				if ($cur_topic['email_setting'] == '0' && !$pun_user['is_guest'])
-					$item['author']['email'] = $cur_topic['email'];
+				if ($pun_config['o_censoring'] == '1')
+					$cur_topic['subject'] = censor_words($cur_topic['subject']);
 
-				$item['author']['uri'] = get_base_url(true).'/profile.php?id='.$cur_topic['poster_id'];
+				$cur_topic['message'] = parse_message($cur_topic['message'], $cur_topic['hide_smilies']);
+
+				$item = array(
+					'id'			=>	$cur_topic['id'],
+					'title'			=>	$cur_topic['subject'],
+					'link'			=>	'/viewtopic.php?id='.$cur_topic['id'].($order_posted ? '' : '&action=new'),
+					'description'	=>	$cur_topic['message'],
+					'author'		=>	array(
+						'name'	=> $order_posted ? $cur_topic['poster'] : $cur_topic['last_poster']
+					),
+					'pubdate'		=>	$order_posted ? $cur_topic['posted'] : $cur_topic['last_post']
+				);
+
+				if ($cur_topic['poster_id'] > 1)
+				{
+					if ($cur_topic['email_setting'] == '0' && !$pun_user['is_guest'])
+						$item['author']['email'] = $cur_topic['email'];
+
+					$item['author']['uri'] = '/profile.php?id='.$cur_topic['poster_id'];
+				}
+				else if ($cur_topic['poster_email'] != '' && !$pun_user['is_guest'])
+					$item['author']['email'] = $cur_topic['poster_email'];
+
+				$feed['items'][] = $item;
 			}
-			else if ($cur_topic['poster_email'] != '' && !$pun_user['is_guest'])
-				$item['author']['email'] = $cur_topic['poster_email'];
 
-			$feed['items'][] = $item;
+			// Output feed as PHP code
+			if (isset($cache_id))
+			{
+				$fh = @fopen(FORUM_CACHE_DIR.'cache_'.$cache_id.'.php', 'wb');
+				if (!$fh)
+					error('Unable to write feed cache file to cache directory. Please make sure PHP has write access to the directory \''.pun_htmlspecialchars(FORUM_CACHE_DIR).'\'', __FILE__, __LINE__);
+
+				fwrite($fh, '<?php'."\n\n".'$feed = '.var_export($feed, true).';'."\n\n".'$cache_expire = '.($now + ($pun_config['o_feed_ttl'] * 60)).';'."\n\n".'?>');
+
+				fclose($fh);
+
+				if (function_exists('apc_delete_file'))
+					@apc_delete_file(FORUM_CACHE_DIR.'cache_'.$cache_id.'.php');
+			}
+		}
+
+		// If we only want to show a few items but due to caching we have too many
+		if (count($feed['items']) > $show)
+			$feed['items'] = array_slice($feed['items'], 0, $show);
+
+		// Prepend the current base URL onto some links. Done after caching to handle http/https correctly
+		$feed['link'] = get_base_url(true).$feed['link'];
+
+		foreach ($feed['items'] as $key => $item)
+		{
+			$feed['items'][$key]['link'] = get_base_url(true).$item['link'];
+
+			if (isset($item['author']['uri']))
+				$feed['items'][$key]['author']['uri'] = get_base_url(true).$item['author']['uri'];
 		}
 
 		$output_func = 'output_'.$type;
@@ -476,11 +519,17 @@ else if ($action == 'stats')
 	require PUN_ROOT.'lang/'.$pun_config['o_default_lang'].'/index.php';
 
 	// Collect some statistics from the database
-	$result = $db->query('SELECT COUNT(id)-1 FROM '.$db->prefix.'users WHERE group_id!='.PUN_UNVERIFIED) or error('Unable to fetch total user count', __FILE__, __LINE__, $db->error());
-	$stats['total_users'] = $db->result($result);
+	if (file_exists(FORUM_CACHE_DIR.'cache_users_info.php'))
+		include FORUM_CACHE_DIR.'cache_users_info.php';
 
-	$result = $db->query('SELECT id, username FROM '.$db->prefix.'users WHERE group_id!='.PUN_UNVERIFIED.' ORDER BY registered DESC LIMIT 1') or error('Unable to fetch newest registered user', __FILE__, __LINE__, $db->error());
-	$stats['last_user'] = $db->fetch_assoc($result);
+	if (!defined('PUN_USERS_INFO_LOADED'))
+	{
+		if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+			require PUN_ROOT.'include/cache.php';
+
+		generate_users_info_cache();
+		require FORUM_CACHE_DIR.'cache_users_info.php';
+	}
 
 	$result = $db->query('SELECT SUM(num_topics), SUM(num_posts) FROM '.$db->prefix.'forums') or error('Unable to fetch topic/post count', __FILE__, __LINE__, $db->error());
 	list($stats['total_topics'], $stats['total_posts']) = $db->fetch_row($result);

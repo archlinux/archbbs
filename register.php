@@ -221,6 +221,12 @@ if (isset($_POST['form_sent']))
 			message($lang_register['Reg email'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.', true);
 		}
 
+		// Regenerate the users info cache
+		if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+			require PUN_ROOT.'include/cache.php';
+
+		generate_users_info_cache();
+
 		pun_setcookie($new_uid, $password_hash, time() + $pun_config['o_timeout_visit']);
 
 		redirect('index.php', $lang_register['Reg complete']);

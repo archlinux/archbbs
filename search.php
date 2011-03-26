@@ -283,7 +283,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			if ($author && $keywords)
 			{
 				$search_ids = array_intersect_assoc($keyword_results, $author_results);
-				$search_type = array('both', array($keywords, $author), $forum, isset($_GET['search_in']) ? $_GET['search_in'] : '');
+				$search_type = array('both', array($keywords, pun_trim($_GET['author'])), $forum, isset($_GET['search_in']) ? $_GET['search_in'] : '');
 			}
 			else if ($keywords)
 			{
@@ -293,7 +293,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			else
 			{
 				$search_ids = $author_results;
-				$search_type = array('author', $author, $forum, isset($_GET['search_in']) ? $_GET['search_in'] : '');
+				$search_type = array('author', pun_trim($_GET['author']), $forum, isset($_GET['search_in']) ? $_GET['search_in'] : '');
 			}
 
 			unset($keyword_results, $author_results);
@@ -343,7 +343,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			{
 				$result = $db->query('SELECT t.id FROM '.$db->prefix.'topics AS t INNER JOIN '.$db->prefix.'posts AS p ON t.id=p.topic_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=t.forum_id AND fp.group_id='.$pun_user['g_id'].') WHERE (fp.read_forum IS NULL OR fp.read_forum=1) AND p.poster_id='.$pun_user['id'].' GROUP BY t.id'.($db_type == 'pgsql' ? ', t.last_post' : '').' ORDER BY t.last_post DESC') or error('Unable to fetch topic list', __FILE__, __LINE__, $db->error());
 				$num_hits = $db->num_rows($result);
-				
+
 				if (!$num_hits)
 					message($lang_search['No user posts']);
 			}
@@ -529,17 +529,17 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			if ($search_type[0] == 'both')
 			{
 				list ($keywords, $author) = $search_type[1];
-				$crumbs_text['search_type'] = sprintf($lang_search['By both'], pun_htmlspecialchars($keywords), pun_htmlspecialchars($author));
+				$crumbs_text['search_type'] = sprintf($lang_search['By both show as '.$show_as], pun_htmlspecialchars($keywords), pun_htmlspecialchars($author));
 			}
 			else if ($search_type[0] == 'keywords')
 			{
 				$keywords = $search_type[1];
-				$crumbs_text['search_type'] = sprintf($lang_search['By keywords'], pun_htmlspecialchars($keywords));
+				$crumbs_text['search_type'] = sprintf($lang_search['By keywords show as '.$show_as], pun_htmlspecialchars($keywords));
 			}
 			else if ($search_type[0] == 'author')
 			{
 				$author = $search_type[1];
-				$crumbs_text['search_type'] = sprintf($lang_search['By user'], pun_htmlspecialchars($author));
+				$crumbs_text['search_type'] = sprintf($lang_search['By user show as '.$show_as], pun_htmlspecialchars($author));
 			}
 
 			$crumbs_text['search_type'] = '<a href="search.php?action=search&amp;keywords='.pun_htmlspecialchars($keywords).'&amp;author='.pun_htmlspecialchars($author).'&amp;forum='.pun_htmlspecialchars($search_type[2]).'&amp;search_in='.pun_htmlspecialchars($search_type[3]).'&amp;sort_by='.pun_htmlspecialchars($sort_by).'&amp;sort_dir='.pun_htmlspecialchars($sort_dir).'&amp;show_as='.pun_htmlspecialchars($show_as).'">'.$crumbs_text['search_type'].'</a>';

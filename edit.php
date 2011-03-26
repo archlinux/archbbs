@@ -61,8 +61,13 @@ if (isset($_POST['form_sent']))
 	{
 		$subject = pun_trim($_POST['req_subject']);
 
+		if ($pun_config['o_censoring'] == '1')
+			$censored_subject = pun_trim(censor_words($subject));
+
 		if ($subject == '')
 			$errors[] = $lang_post['No subject'];
+		else if ($pun_config['o_censoring'] == '1' && $censored_subject == '')
+			$errors[] = $lang_post['No subject after censoring'];
 		else if (pun_strlen($subject) > 70)
 			$errors[] = $lang_post['Too long subject'];
 		else if ($pun_config['p_subject_all_caps'] == '0' && is_all_uppercase($subject) && !$pun_user['is_admmod'])
@@ -85,8 +90,19 @@ if (isset($_POST['form_sent']))
 		$message = preparse_bbcode($message, $errors);
 	}
 
-	if ($message == '')
-		$errors[] = $lang_post['No message'];
+	if (empty($errors))
+	{
+		if ($message == '')
+			$errors[] = $lang_post['No message'];
+		else if ($pun_config['o_censoring'] == '1')
+		{
+			// Censor message to see if that causes problems
+			$censored_message = pun_trim(censor_words($message));
+
+			if ($censored_message == '')
+				$errors[] = $lang_post['No message after censoring'];
+		}
+	}
 
 	$hide_smilies = isset($_POST['hide_smilies']) ? '1' : '0';
 	$stick_topic = isset($_POST['stick_topic']) ? '1' : '0';
@@ -207,7 +223,7 @@ else if (isset($_POST['preview']))
 						<textarea name="req_message" rows="20" cols="95" tabindex="<?php echo $cur_index++ ?>"><?php echo pun_htmlspecialchars(isset($_POST['req_message']) ? $message : $cur_post['message']) ?></textarea><br /></label>
 						<ul class="bblinks">
 							<li><span><a href="help.php#bbcode" onclick="window.open(this.href); return false;"><?php echo $lang_common['BBCode'] ?></a> <?php echo ($pun_config['p_message_bbcode'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
-							<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_message_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
+							<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_message_bbcode'] == '1' && $pun_config['p_message_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 							<li><span><a href="help.php#smilies" onclick="window.open(this.href); return false;"><?php echo $lang_common['Smilies'] ?></a> <?php echo ($pun_config['o_smilies'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 						</ul>
 					</div>

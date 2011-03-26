@@ -5,8 +5,10 @@ $lang_post = array(
 
 // Überprüfung des Versands (einige ähnlich wie in edit.php)
 'No subject'		=>	'Themen müssen einen Titel haben.',
+'No subject after censoring'	=>	'Themen müssen einen Titel haben. Nach Anwendung des Zensurfilters ist der Titel leer.',
 'Too long subject'	=>	'Der Betreff darf nicht länger als 70 Zeichen sein.',
 'No message'		=>	'Du musst einen Beitrag eingeben.',
+'No message after censoring'	=>	'Du musst einen Beitrag eingeben. Nach Anwendung des Zensurfilters ist deine Nachricht leer.',
 'Too long message'	=>	'Beiträge dürfen nicht größer als %s Byte sein.',
 'All caps subject'	=>	'Der Betreff darf nicht nur Großbuchstaben enthalten.',
 'All caps message'	=>	'Der Beitrag darf nicht nur Großbuchstaben enthalten.',
@@ -27,6 +29,8 @@ $lang_post = array(
 'Flood start'		=>	'Es müssen mindestens',
 'flood end'			=>	'Sekunden zwischen zwei Beiträgen vergangen sein. Bitte warte etwas und versuche es dann erneut.',
 'Preview'			=>	'Vorschau', // Beschriftung des Absende-Button für die Nachrichtenvorschau
+'Post revision'			=>	'ACHTUNG - neuer Beitrag',
+'Post revision info'	=>	'Während du geschrieben hast, wurde ein oder mehrere neue Beiträge zu diesem Thema erstellt. <br />Du kannst diese unterhalb des Textfensters lesen, bevor du deinen Beitrag absendest.',
 
 // Beitrag bearbeiten
 'Edit post legend'	=>	'Ändere den Beitrag und speichere die Änderungen',

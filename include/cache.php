@@ -133,7 +133,7 @@ function generate_quickjump_cache($group_id = false)
 
 		if ($read_board == '1')
 		{
-			$result = $db->query('SELECT c.id AS cid, c.cat_name, f.id AS fid, f.forum_name, f.redirect_url FROM '.$db->prefix.'categories AS c INNER JOIN '.$db->prefix.'forums AS f ON c.id=f.cat_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$group_id.') WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY c.disp_position, c.id, f.disp_position', true) or error('Unable to fetch category/forum list', __FILE__, __LINE__, $db->error());
+			$result = $db->query('SELECT c.id AS cid, c.cat_name, f.id AS fid, f.forum_name, f.redirect_url FROM '.$db->prefix.'categories AS c INNER JOIN '.$db->prefix.'forums AS f ON c.id=f.cat_id LEFT JOIN '.$db->prefix.'forum_perms AS fp ON (fp.forum_id=f.id AND fp.group_id='.$group_id.') WHERE fp.read_forum IS NULL OR fp.read_forum=1 ORDER BY c.disp_position, c.id, f.disp_position') or error('Unable to fetch category/forum list', __FILE__, __LINE__, $db->error());
 
 			if ($db->num_rows($result))
 			{
@@ -227,12 +227,56 @@ function generate_stopwords_cache()
 	if (!$fh)
 		error('Unable to write stopwords cache file to cache directory. Please make sure PHP has write access to the directory \''.pun_htmlspecialchars(FORUM_CACHE_DIR).'\'', __FILE__, __LINE__);
 
-	fwrite($fh, '<?php'."\n\n".'define(\'PUN_STOPWORDS_LOADED\', 1);'."\n\n".'$stopwords = '.var_export($stopwords, true).';'."\n\n".'?>');
+	fwrite($fh, '<?php'."\n\n".'$cache_id = \''.generate_stopwords_cache_id().'\';'."\n".'if ($cache_id != generate_stopwords_cache_id()) return;'."\n\n".'define(\'PUN_STOPWORDS_LOADED\', 1);'."\n\n".'$stopwords = '.var_export($stopwords, true).';'."\n\n".'?>');
 
 	fclose($fh);
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_stopwords.php');
+}
+
+
+//
+// Load some information about the latest registered users
+//
+function generate_users_info_cache()
+{
+	global $db;
+
+	$stats = array();
+
+	$result = $db->query('SELECT COUNT(id)-1 FROM '.$db->prefix.'users WHERE group_id!='.PUN_UNVERIFIED) or error('Unable to fetch total user count', __FILE__, __LINE__, $db->error());
+	$stats['total_users'] = $db->result($result);
+
+	$result = $db->query('SELECT id, username FROM '.$db->prefix.'users WHERE group_id!='.PUN_UNVERIFIED.' ORDER BY registered DESC LIMIT 1') or error('Unable to fetch newest registered user', __FILE__, __LINE__, $db->error());
+	$stats['last_user'] = $db->fetch_assoc($result);
+
+	// Output users info as PHP code
+	$fh = @fopen(FORUM_CACHE_DIR.'cache_users_info.php', 'wb');
+	if (!$fh)
+		error('Unable to write users info cache file to cache directory. Please make sure PHP has write access to the directory \''.pun_htmlspecialchars(FORUM_CACHE_DIR).'\'', __FILE__, __LINE__);
+
+	fwrite($fh, '<?php'."\n\n".'define(\'PUN_USERS_INFO_LOADED\', 1);'."\n\n".'$stats = '.var_export($stats, true).';'."\n\n".'?>');
+
+	fclose($fh);
+
+	if (function_exists('apc_delete_file'))
+		@apc_delete_file(FORUM_CACHE_DIR.'cache_users_info.php');
+}
+
+
+//
+// Delete all feed caches
+//
+function clear_feed_cache()
+{
+	$d = dir(FORUM_CACHE_DIR);
+	while (($entry = $d->read()) !== false)
+	{
+		if (substr($entry, 0, 10) == 'cache_feed' && substr($entry, -4) == '.php')
+			@unlink(FORUM_CACHE_DIR.$entry);
+	}
+	$d->close();
 }
 
 

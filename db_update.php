@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.4.4');
+define('UPDATE_TO', '1.4.5');
 
-define('UPDATE_TO_DB_REVISION', 10);
+define('UPDATE_TO_DB_REVISION', 11);
 define('UPDATE_TO_SI_REVISION', 2);
 define('UPDATE_TO_PARSER_REVISION', 2);
 
@@ -173,9 +173,6 @@ if (!file_exists(PUN_ROOT.'style/'.$default_style.'.css'))
 
 // Start a session, used to queue up errors if duplicate users occur when converting from FluxBB v1.2.
 session_start();
-
-if (!isset($_SESSION['dupe_users']))
-	$_SESSION['dupe_users'] = array();
 
 //
 // Determines whether $str is UTF-8 encoded or not
@@ -709,6 +706,10 @@ switch ($stage)
 		// Insert new config option o_feed_type
 		if (!array_key_exists('o_feed_type', $pun_config))
 			$db->query('INSERT INTO '.$db->prefix.'config (conf_name, conf_value) VALUES (\'o_feed_type\', \'2\')') or error('Unable to insert config value \'o_feed_type\'', __FILE__, __LINE__, $db->error());
+
+		// Insert new config option o_feed_ttl
+		if (!array_key_exists('o_feed_ttl', $pun_config))
+			$db->query('INSERT INTO '.$db->prefix.'config (conf_name, conf_value) VALUES (\'o_feed_ttl\', \'0\')') or error('Unable to insert config value \'o_feed_ttl\'', __FILE__, __LINE__, $db->error());
 
 		// Insert config option o_base_url which was removed in 1.3
 		if (!array_key_exists('o_base_url', $pun_config))
@@ -1398,6 +1399,9 @@ switch ($stage)
 	case 'conv_users':
 		$query_str = '?stage=preparse_posts';
 
+		if ($start_at == 0)
+			$_SESSION['dupe_users'] = array();
+
 		function _conv_users($cur_item, $old_charset)
 		{
 			global $lang_update;
@@ -1461,7 +1465,7 @@ switch ($stage)
 				else if (preg_match('/(?:\[\/?(?:b|u|s|ins|del|em|i|h|colou?r|quote|code|img|url|email|list|\*)\]|\[(?:img|url|quote|list)=)/i', $username))
 					$errors[$id][] = $lang_update['Username BBCode error'];
 
-				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(ucp_preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 				if ($db->num_rows($result))
 				{
@@ -1562,7 +1566,7 @@ switch ($stage)
 <div class="blockform">
 	<h2><span><?php echo $lang_update['Error converting users'] ?></span></h2>
 	<div class="box">
-		<form method="post" action="db_update.php?stage=conv_users_dupe">
+		<form method="post" action="db_update.php?stage=conv_users_dupe&amp;uid=<?php echo $uid ?>">
 			<input type="hidden" name="form_sent" value="1" />
 			<div class="inform">
 				<div class="forminfo">
@@ -1580,7 +1584,7 @@ switch ($stage)
 				<fieldset>
 					<legend><?php echo pun_htmlspecialchars($cur_user['username']); ?></legend>
 					<div class="infldset">
-						<label class="required"><strong><?php echo $lang_update['New username'] ?> <span><?php echo $lang_update['required'] ?></span></strong><br /><input type="text" name="<?php echo 'dupe_users['.$id.']'; ?>" value="<?php if (isset($_POST['dupe_users'][$id])) echo pun_htmlspecialchars($_POST['dupe_users'][$id]); ?>" size="25" maxlength="25" /><br /></label>
+						<label class="required"><strong><?php echo $lang_update['New username'] ?> <span><?php echo $lang_update['Required'] ?></span></strong><br /><input type="text" name="<?php echo 'dupe_users['.$id.']'; ?>" value="<?php if (isset($_POST['dupe_users'][$id])) echo pun_htmlspecialchars($_POST['dupe_users'][$id]); ?>" size="25" maxlength="25" /><br /></label>
 					</div>
 				</fieldset>
 <?php if (!empty($errors[$id])): ?>				<div class="forminfo error-info">
