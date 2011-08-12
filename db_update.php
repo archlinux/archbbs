@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.4.5');
+define('UPDATE_TO', '1.4.6');
 
-define('UPDATE_TO_DB_REVISION', 11);
+define('UPDATE_TO_DB_REVISION', 15);
 define('UPDATE_TO_SI_REVISION', 2);
 define('UPDATE_TO_PARSER_REVISION', 2);
 
@@ -277,8 +277,8 @@ function convert_to_utf8(&$str, $old_charset)
 		$str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
 
 	// Replace numeric entities
-	$str = preg_replace_callback('/&#([0-9]+);/', 'utf8_callback_1', $str);
-	$str = preg_replace_callback('/&#x([a-f0-9]+);/i', 'utf8_callback_2', $str);
+	$str = preg_replace_callback('%&#([0-9]+);%', 'utf8_callback_1', $str);
+	$str = preg_replace_callback('%&#x([a-f0-9]+);%i', 'utf8_callback_2', $str);
 
 	// Remove "bad" characters
 	$str = remove_bad_characters($str);
@@ -339,7 +339,7 @@ function alter_table_utf8($table)
 			$allow_null = ($cur_column['Null'] == 'YES');
 			$collate = (substr($cur_column['Collation'], -3) == 'bin') ? 'utf8_bin' : 'utf8_general_ci';
 
-			$db->alter_field($table, $cur_column['Field'], preg_replace('/'.$type.'/i', $types[$type], $cur_column['Type']), $allow_null, $cur_column['Default'], null, true) or error('Unable to alter field to binary', __FILE__, __LINE__, $db->error());
+			$db->alter_field($table, $cur_column['Field'], preg_replace('%'.$type.'%i', $types[$type], $cur_column['Type']), $allow_null, $cur_column['Default'], null, true) or error('Unable to alter field to binary', __FILE__, __LINE__, $db->error());
 			$db->alter_field($table, $cur_column['Field'], $cur_column['Type'].' CHARACTER SET utf8 COLLATE '.$collate, $allow_null, $cur_column['Default'], null, true) or error('Unable to alter field to utf8', __FILE__, __LINE__, $db->error());
 		}
 	}
@@ -459,6 +459,48 @@ $query_str = '';
 // Show form
 if (empty($stage))
 {
+	if (file_exists(FORUM_CACHE_DIR.'db_update.lock'))
+	{
+		// Deal with newlines, tabs and multiple spaces
+		$pattern = array("\t", '  ', '  ');
+		$replace = array('&#160; &#160; ', '&#160; ', ' &#160;');
+		$message = str_replace($pattern, $replace, $pun_config['o_maintenance_message']);
+
+?>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title><?php echo $lang_update['Maintenance'] ?></title>
+<link rel="stylesheet" type="text/css" href="style/<?php echo $default_style ?>.css" />
+</head>
+<body>
+
+<div id="punmaint" class="pun">
+<div class="top-box"><div><!-- Top Corners --></div></div>
+<div class="punwrap">
+
+<div id="brdmain">
+<div class="block">
+	<h2><?php echo $lang_update['Maintenance'] ?></h2>
+	<div class="box">
+		<div class="inbox">
+			<p><?php echo $message ?></p>
+		</div>
+	</div>
+</div>
+</div>
+
+</div>
+<div class="end-box"><div><!-- Bottom Corners --></div></div>
+</div>
+
+</body>
+</html>
+<?php
+
+	}
+	else
+	{
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -469,7 +511,7 @@ if (empty($stage))
 <title><?php echo $lang_update['Update'] ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $default_style ?>.css" />
 </head>
-<body onload="document.getElementById('install').req_db_type.focus();document.getElementById('install').start.disabled=false;">
+<body onload="document.getElementById('install').req_db_pass.focus();document.getElementById('install').start.disabled=false;">
 
 <div id="pundb_update" class="pun">
 <div class="top-box"><div><!-- Top Corners --></div></div>
@@ -488,7 +530,7 @@ if (empty($stage))
 <div class="blockform">
 	<h2><span><?php echo $lang_update['Update'] ?></span></h2>
 	<div class="box">
-		<form method="post" action="db_update.php">
+		<form id="install" method="post" action="db_update.php">
 			<input type="hidden" name="stage" value="start" />
 			<div class="inform">
 				<fieldset>
@@ -497,6 +539,11 @@ if (empty($stage))
 						<p><?php echo $lang_update['Database password info'] ?></p>
 						<p><strong><?php echo $lang_update['Note']; ?></strong> <?php echo $lang_update['Database password note'] ?></p>
 						<label class="required"><strong><?php echo $lang_update['Database password'] ?> <span><?php echo $lang_update['Required'] ?></span></strong><br /><input type="password" id="req_db_pass" name="req_db_pass" /><br /></label>
+						<p><?php echo $lang_update['Maintenance message info'] ?></p>
+						<div class="txtarea">
+							<label class="required"><strong><?php echo $lang_update['Maintenance message'] ?> <span><?php echo $lang_update['Required'] ?></span></strong><br />
+							<textarea name="req_maintenance_message" rows="4" cols="65"><?php echo pun_htmlspecialchars($pun_config['o_maintenance_message']) ?></textarea><br /></label>
+						</div>
 					</div>
 				</fieldset>
 			</div>
@@ -559,6 +606,7 @@ if (empty($stage))
 </html>
 <?php
 
+	}
 	$db->end_transaction();
 	$db->close();
 	exit;
@@ -602,6 +650,25 @@ if (isset($_POST['req_db_pass']))
 
 		fwrite($fh, $uid);
 		fclose($fh);
+
+		// Update maintenance message
+		if ($_POST['req_maintenance_message'] != '')
+			$maintenance_message = pun_trim(pun_linebreaks($_POST['req_maintenance_message']));
+		else
+		{
+			// Load the admin_options.php language file
+			require PUN_ROOT.'lang/'.$default_lang.'/admin_options.php';
+
+			$maintenance_message = $lang_admin_options['Default maintenance message'];
+		}
+
+		$db->query('UPDATE '.$db->prefix.'config SET conf_value=\''.$db->escape($maintenance_message).'\' WHERE conf_name=\'o_maintenance_message\'') or error('Unable to update board config', __FILE__, __LINE__, $db->error());
+
+		// Regenerate the config cache
+		if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+			require PUN_ROOT.'include/cache.php';
+
+		generate_config_cache();
 	}
 }
 else if (isset($_GET['uid']))
@@ -719,7 +786,7 @@ switch ($stage)
 			{
 				// Make an educated guess regarding base_url
 				$base_url  = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https://' : 'http://';	// protocol
-				$base_url .= preg_replace('/:(80|443)$/', '', $_SERVER['HTTP_HOST']);							// host[:port]
+				$base_url .= preg_replace('%:(80|443)$%', '', $_SERVER['HTTP_HOST']);							// host[:port]
 				$base_url .= str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));							// path
 			}
 
@@ -753,7 +820,7 @@ switch ($stage)
 				$mod_gid = $db->result($result);
 			else
 			{
-				$db->query('INSERT INTO '.$db->prefix.'groups (g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood) VALUES('."'Moderators', 'Moderator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
+				$db->query('INSERT INTO '.$db->prefix.'groups (g_title, g_user_title, g_moderator, g_mod_edit_users, g_mod_rename_users, g_mod_change_passwords, g_mod_ban_users, g_read_board, g_view_users, g_post_replies, g_post_topics, g_edit_posts, g_delete_posts, g_delete_topics, g_set_title, g_search, g_search_users, g_send_email, g_post_flood, g_search_flood, g_email_flood, g_report_flood) VALUES('."'Moderators', 'Moderator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0)") or error('Unable to add group', __FILE__, __LINE__, $db->error());
 				$mod_gid = $db->insert_id();
 			}
 
@@ -916,9 +983,14 @@ switch ($stage)
 		$db->add_field('groups', 'g_send_email', 'TINYINT(1)', false, 1, 'g_search_users') or error('Unable to add g_send_email field', __FILE__, __LINE__, $db->error());
 		$db->add_field('groups', 'g_email_flood', 'SMALLINT(6)', false, 60, 'g_search_flood') or error('Unable to add g_email_flood field', __FILE__, __LINE__, $db->error());
 
-		// Set non-default g_send_email and g_flood_email values properly
+		// Add the last_report_sent column to the users table and the g_report_flood
+		// column to the groups table
+		$db->add_field('users', 'last_report_sent', 'INT(10) UNSIGNED', true, null, 'last_email_sent') or error('Unable to add last_report_sent field', __FILE__, __LINE__, $db->error());
+		$db->add_field('groups', 'g_report_flood', 'SMALLINT(6)', false, 60, 'g_email_flood') or error('Unable to add g_report_flood field', __FILE__, __LINE__, $db->error());
+
+		// Set non-default g_send_email, g_flood_email and g_flood_report values properly
 		$db->query('UPDATE '.$db->prefix.'groups SET g_send_email = 0 WHERE g_id = 3') or error('Unable to update group email permissions', __FILE__, __LINE__, $db->error());
-		$db->query('UPDATE '.$db->prefix.'groups SET g_email_flood = 0 WHERE g_id IN (1,2,3)') or error('Unable to update group email permissions', __FILE__, __LINE__, $db->error());
+		$db->query('UPDATE '.$db->prefix.'groups SET g_email_flood = 0, g_report_flood = 0 WHERE g_id IN (1,2,3)') or error('Unable to update group email permissions', __FILE__, __LINE__, $db->error());
 
 		// Add the auto notify/subscription option to the users table
 		$db->add_field('users', 'auto_notify', 'TINYINT(1)', false, 0, 'notify_with_post') or error('Unable to add auto_notify field', __FILE__, __LINE__, $db->error());
@@ -1085,6 +1157,10 @@ switch ($stage)
 		// Change the default style if the old doesn't exist anymore
 		if ($pun_config['o_default_style'] != $default_style)
 			$db->query('UPDATE '.$db->prefix.'config SET conf_value = \''.$db->escape($default_style).'\' WHERE conf_name = \'o_default_style\'') or error('Unable to update default style config', __FILE__, __LINE__, $db->error());
+
+		// For MySQL(i) without InnoDB, change the engine of the online table (for performance reasons)
+		if ($db_type == 'mysql' || $db_type == 'mysqli')
+			$db->query('ALTER TABLE '.$db->prefix.'online ENGINE = MyISAM') or error('Unable to change engine type of online table to MyISAM', __FILE__, __LINE__, $db->error());
 
 		// Should we do charset conversion or not?
 		if (strpos($cur_version, '1.2') === 0 && isset($_POST['convert_charset']))
@@ -1458,14 +1534,14 @@ switch ($stage)
 					$errors[$id][] = $lang_update['Username too long error'];
 				else if (!strcasecmp($username, 'Guest'))
 					$errors[$id][] = $lang_update['Username Guest reserved error'];
-				else if (preg_match('/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/', $username) || preg_match('/((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))/', $username))
+				else if (preg_match('%[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}%', $username) || preg_match('%((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))%', $username))
 					$errors[$id][] = $lang_update['Username IP format error'];
 				else if ((strpos($username, '[') !== false || strpos($username, ']') !== false) && strpos($username, '\'') !== false && strpos($username, '"') !== false)
 					$errors[$id][] = $lang_update['Username bad characters error'];
-				else if (preg_match('/(?:\[\/?(?:b|u|s|ins|del|em|i|h|colou?r|quote|code|img|url|email|list|\*)\]|\[(?:img|url|quote|list)=)/i', $username))
+				else if (preg_match('%(?:\[/?(?:b|u|s|ins|del|em|i|h|colou?r|quote|code|img|url|email|list|\*)\]|\[(?:img|url|quote|list)=)%i', $username))
 					$errors[$id][] = $lang_update['Username BBCode error'];
 
-				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(ucp_preg_replace('/[^\p{L}\p{N}]/u', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+				$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(ucp_preg_replace('%[^\p{L}\p{N}]%u', '', $username)).'\')) AND id>1') or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
 				if ($db->num_rows($result))
 				{
@@ -1535,7 +1611,7 @@ switch ($stage)
 					$mail_message = str_replace('<base_url>', get_base_url().'/', $mail_message);
 					$mail_message = str_replace('<old_username>', $old_username, $mail_message);
 					$mail_message = str_replace('<new_username>', $username, $mail_message);
-					$mail_message = str_replace('<board_mailer>', $pun_config['o_board_title'].' Mailer', $mail_message);
+					$mail_message = str_replace('<board_mailer>', $pun_config['o_board_title'], $mail_message);
 
 					pun_mail($cur_user['email'], $mail_subject, $mail_message);
 
@@ -1828,4 +1904,5 @@ $db->end_transaction();
 $db->close();
 
 if ($query_str != '')
-	exit('<script type="text/javascript">window.location="db_update.php'.$query_str.'&uid='.$uid.'"</script><noscript>'.sprintf($lang_update['JavaScript disabled'], sprintf('<a href="db_update.php'.$query_str.'&uid='.$uid.'">%s</a>', $lang_update['Click here to continue'])).'</noscript>');
+	exit('<script type="text/javascript">window.location="db_update.php'.$query_str.'&uid='.$uid.'"</script><noscript><meta http-equiv="refresh" content="0;url=db_update.php'.$query_str.'&uid='.$uid.'" /></noscript>');
+

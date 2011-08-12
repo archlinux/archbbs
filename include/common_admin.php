@@ -14,7 +14,7 @@ if (!defined('PUN'))
 if (file_exists(PUN_ROOT.'lang/'.$pun_user['language'].'/admin_common.php'))
 	$admin_language = $pun_user['language'];
 else if (file_exists(PUN_ROOT.'lang/'.$pun_config['o_default_lang'].'/admin_common.php'))
-	$admin_language = $pun_config['language'];
+	$admin_language = $pun_config['o_default_lang'];
 else
 	$admin_language = 'English';
 
@@ -83,8 +83,8 @@ function generate_admin_menu($page = '')
 				<ul>
 <?php
 
-		foreach ($plugins as $cur_plugin)
-			echo "\t\t\t\t\t".'<li'.(($page == $cur_plugin[1]) ? ' class="isactive"' : '').'><a href="admin_loader.php?plugin='.$cur_plugin[1].'">'.str_replace('_', ' ', $cur_plugin[0]).'</a></li>'."\n";
+		foreach ($plugins as $plugin_name => $plugin)
+			echo "\t\t\t\t\t".'<li'.(($page == $plugin_name) ? ' class="isactive"' : '').'><a href="admin_loader.php?plugin='.$plugin_name.'">'.str_replace('_', ' ', $plugin).'</a></li>'."\n";
 
 ?>
 				</ul>
