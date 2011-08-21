@@ -8,6 +8,7 @@
 
 define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
+require PUN_ROOT.'include/funnyquestion.php';
 
 
 if ($pun_user['g_read_board'] == '0')
@@ -441,7 +442,9 @@ else
 					</div>
 				</fieldset>
 			</div>
-			<p class="buttons"><input type="submit" name="submit" tabindex="<?php echo $cur_index++ ?>" value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_topic['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /></p>
+			<?php echo get_funnyquestion(); ?>
+			<p class="buttons"><input type="submit" name="submit" tabindex="<?php echo $cur_index++ ?>" 
+value="<?php echo $lang_common['Submit'] ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_topic['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /></p>
 		</form>
 	</div>
 </div>
