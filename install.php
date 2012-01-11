@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Copyright (C) 2008-2011 FluxBB
+ * Copyright (C) 2008-2012 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 // The FluxBB version this script installs
-define('FORUM_VERSION', '1.4.7');
+define('FORUM_VERSION', '1.4.8');
 
 define('FORUM_DB_REVISION', 15);
 define('FORUM_SI_REVISION', 2);
@@ -205,11 +205,11 @@ else
 }
 
 // Check if the cache directory is writable
-if (!@is_writable(FORUM_CACHE_DIR))
+if (!forum_is_writable(FORUM_CACHE_DIR))
 	$alerts[] = sprintf($lang_install['Alert cache'], FORUM_CACHE_DIR);
 
 // Check if default avatar directory is writable
-if (!@is_writable(PUN_ROOT.'img/avatars/'))
+if (!forum_is_writable(PUN_ROOT.'img/avatars/'))
 	$alerts[] = sprintf($lang_install['Alert avatar'], PUN_ROOT.'img/avatars/');
 
 if (!isset($_POST['form_sent']) || !empty($alerts))
@@ -255,11 +255,10 @@ if (!isset($_POST['form_sent']) || !empty($alerts))
 /* <![CDATA[ */
 function process_form(the_form)
 {
-	var element_names = {
+	var required_fields = {
 		"req_db_type": "<?php echo $lang_install['Database type'] ?>",
 		"req_db_host": "<?php echo $lang_install['Database server hostname'] ?>",
 		"req_db_name": "<?php echo $lang_install['Database name'] ?>",
-		"db_prefix": "<?php echo $lang_install['Table prefix'] ?>",
 		"req_username": "<?php echo $lang_install['Administrator username'] ?>",
 		"req_password1": "<?php echo $lang_install['Administrator password 1'] ?>",
 		"req_password2": "<?php echo $lang_install['Administrator password 2'] ?>",
@@ -272,14 +271,11 @@ function process_form(the_form)
 		for (var i = 0; i < the_form.length; ++i)
 		{
 			var elem = the_form.elements[i];
-			if (elem.name && (/^req_/.test(elem.name)))
+			if (elem.name && required_fields[elem.name] && !elem.value && elem.type && (/^(?:text(?:area)?|password|file)$/i.test(elem.type)))
 			{
-				if (!elem.value && elem.type && (/^(?:text(?:area)?|password|file)$/i.test(elem.type)))
-				{
-					alert('"' + element_names[elem.name] + '" <?php echo $lang_install['Required field'] ?>');
-					elem.focus();
-					return false;
-				}
+				alert('"' + required_fields[elem.name] + '" <?php echo $lang_install['Required field'] ?>');
+				elem.focus();
+				return false;
 			}
 		}
 	}
@@ -1584,90 +1580,90 @@ else
 	$avatars = in_array(strtolower(@ini_get('file_uploads')), array('on', 'true', '1')) ? 1 : 0;
 
 	// Insert config data
-	$config = array(
-		'o_cur_version'				=> "'".FORUM_VERSION."'",
-		'o_database_revision'		=> "'".FORUM_DB_REVISION."'",
-		'o_searchindex_revision'	=> "'".FORUM_SI_REVISION."'",
-		'o_parser_revision'			=> "'".FORUM_PARSER_REVISION."'",
-		'o_board_title'				=> "'".$db->escape($title)."'",
-		'o_board_desc'				=> "'".$db->escape($description)."'",
-		'o_default_timezone'		=> "'0'",
-		'o_time_format'				=> "'H:i:s'",
-		'o_date_format'				=> "'Y-m-d'",
-		'o_timeout_visit'			=> "'1800'",
-		'o_timeout_online'			=> "'300'",
-		'o_redirect_delay'			=> "'1'",
-		'o_show_version'			=> "'0'",
-		'o_show_user_info'			=> "'1'",
-		'o_show_post_count'			=> "'1'",
-		'o_signatures'				=> "'1'",
-		'o_smilies'					=> "'1'",
-		'o_smilies_sig'				=> "'1'",
-		'o_make_links'				=> "'1'",
-		'o_default_lang'			=> "'".$db->escape($default_lang)."'",
-		'o_default_style'			=> "'".$db->escape($default_style)."'",
-		'o_default_user_group'		=> "'4'",
-		'o_topic_review'			=> "'15'",
-		'o_disp_topics_default'		=> "'30'",
-		'o_disp_posts_default'		=> "'25'",
-		'o_indent_num_spaces'		=> "'4'",
-		'o_quote_depth'				=> "'3'",
-		'o_quickpost'				=> "'1'",
-		'o_users_online'			=> "'1'",
-		'o_censoring'				=> "'0'",
-		'o_ranks'					=> "'1'",
-		'o_show_dot'				=> "'0'",
-		'o_topic_views'				=> "'1'",
-		'o_quickjump'				=> "'1'",
-		'o_gzip'					=> "'0'",
-		'o_additional_navlinks'		=> "''",
-		'o_report_method'			=> "'0'",
-		'o_regs_report'				=> "'0'",
-		'o_default_email_setting'	=> "'1'",
-		'o_mailing_list'			=> "'".$email."'",
-		'o_avatars'					=> "'".$avatars."'",
-		'o_avatars_dir'				=> "'img/avatars'",
-		'o_avatars_width'			=> "'60'",
-		'o_avatars_height'			=> "'60'",
-		'o_avatars_size'			=> "'10240'",
-		'o_search_all_forums'		=> "'1'",
-		'o_base_url'				=> "'".$db->escape($base_url)."'",
-		'o_admin_email'				=> "'".$email."'",
-		'o_webmaster_email'			=> "'".$email."'",
-		'o_forum_subscriptions'		=> "'1'",
-		'o_topic_subscriptions'		=> "'1'",
-		'o_smtp_host'				=> "NULL",
-		'o_smtp_user'				=> "NULL",
-		'o_smtp_pass'				=> "NULL",
-		'o_smtp_ssl'				=> "'0'",
-		'o_regs_allow'				=> "'1'",
-		'o_regs_verify'				=> "'0'",
-		'o_announcement'			=> "'0'",
-		'o_announcement_message'	=> "'".$db->escape($lang_install['Announcement'])."'",
-		'o_rules'					=> "'0'",
-		'o_rules_message'			=> "'".$db->escape($lang_install['Rules'])."'",
-		'o_maintenance'				=> "'0'",
-		'o_maintenance_message'		=> "'".$db->escape($lang_install['Maintenance message'])."'",
-		'o_default_dst'				=> "'0'",
-		'o_feed_type'				=> "'2'",
-		'o_feed_ttl'				=> "'0'",
-		'p_message_bbcode'			=> "'1'",
-		'p_message_img_tag'			=> "'1'",
-		'p_message_all_caps'		=> "'1'",
-		'p_subject_all_caps'		=> "'1'",
-		'p_sig_all_caps'			=> "'1'",
-		'p_sig_bbcode'				=> "'1'",
-		'p_sig_img_tag'				=> "'0'",
-		'p_sig_length'				=> "'400'",
-		'p_sig_lines'				=> "'4'",
-		'p_allow_banned_email'		=> "'1'",
-		'p_allow_dupe_email'		=> "'0'",
-		'p_force_guest_email'		=> "'1'"
+	$pun_config = array(
+		'o_cur_version'				=> FORUM_VERSION,
+		'o_database_revision'		=> FORUM_DB_REVISION,
+		'o_searchindex_revision'	=> FORUM_SI_REVISION,
+		'o_parser_revision'			=> FORUM_PARSER_REVISION,
+		'o_board_title'				=> $title,
+		'o_board_desc'				=> $description,
+		'o_default_timezone'		=> 0,
+		'o_time_format'				=> 'H:i:s',
+		'o_date_format'				=> 'Y-m-d',
+		'o_timeout_visit'			=> 1800,
+		'o_timeout_online'			=> 300,
+		'o_redirect_delay'			=> 1,
+		'o_show_version'			=> 0,
+		'o_show_user_info'			=> 1,
+		'o_show_post_count'			=> 1,
+		'o_signatures'				=> 1,
+		'o_smilies'					=> 1,
+		'o_smilies_sig'				=> 1,
+		'o_make_links'				=> 1,
+		'o_default_lang'			=> $default_lang,
+		'o_default_style'			=> $default_style,
+		'o_default_user_group'		=> 4,
+		'o_topic_review'			=> 15,
+		'o_disp_topics_default'		=> 30,
+		'o_disp_posts_default'		=> 25,
+		'o_indent_num_spaces'		=> 4,
+		'o_quote_depth'				=> 3,
+		'o_quickpost'				=> 1,
+		'o_users_online'			=> 1,
+		'o_censoring'				=> 0,
+		'o_ranks'					=> 1,
+		'o_show_dot'				=> 0,
+		'o_topic_views'				=> 1,
+		'o_quickjump'				=> 1,
+		'o_gzip'					=> 0,
+		'o_additional_navlinks'		=> '',
+		'o_report_method'			=> 0,
+		'o_regs_report'				=> 0,
+		'o_default_email_setting'	=> 1,
+		'o_mailing_list'			=> $email,
+		'o_avatars'					=> $avatars,
+		'o_avatars_dir'				=> 'img/avatars',
+		'o_avatars_width'			=> 60,
+		'o_avatars_height'			=> 60,
+		'o_avatars_size'			=> 10240,
+		'o_search_all_forums'		=> 1,
+		'o_base_url'				=> $base_url,
+		'o_admin_email'				=> $email,
+		'o_webmaster_email'			=> $email,
+		'o_forum_subscriptions'		=> 1,
+		'o_topic_subscriptions'		=> 1,
+		'o_smtp_host'				=> NULL,
+		'o_smtp_user'				=> NULL,
+		'o_smtp_pass'				=> NULL,
+		'o_smtp_ssl'				=> 0,
+		'o_regs_allow'				=> 1,
+		'o_regs_verify'				=> 0,
+		'o_announcement'			=> 0,
+		'o_announcement_message'	=> $lang_install['Announcement'],
+		'o_rules'					=> 0,
+		'o_rules_message'			=> $lang_install['Rules'],
+		'o_maintenance'				=> 0,
+		'o_maintenance_message'		=> $lang_install['Maintenance message'],
+		'o_default_dst'				=> 0,
+		'o_feed_type'				=> 2,
+		'o_feed_ttl'				=> 0,
+		'p_message_bbcode'			=> 1,
+		'p_message_img_tag'			=> 1,
+		'p_message_all_caps'		=> 1,
+		'p_subject_all_caps'		=> 1,
+		'p_sig_all_caps'			=> 1,
+		'p_sig_bbcode'				=> 1,
+		'p_sig_img_tag'				=> 0,
+		'p_sig_length'				=> 400,
+		'p_sig_lines'				=> 4,
+		'p_allow_banned_email'		=> 1,
+		'p_allow_dupe_email'		=> 0,
+		'p_force_guest_email'		=> 1
 	);
 
-	foreach ($config as $conf_name => $conf_value)
+	foreach ($pun_config as $conf_name => $conf_value)
 	{
-		$db->query('INSERT INTO '.$db_prefix."config (conf_name, conf_value) VALUES('$conf_name', $conf_value)")
+		$db->query('INSERT INTO '.$db_prefix.'config (conf_name, conf_value) VALUES(\''.$conf_name.'\', '.($conf_value === NULL ? 'NULL' : '\''.$db->escape($conf_value).'\'').')')
 			or error('Unable to insert into table '.$db_prefix.'config. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 	}
 
@@ -1695,7 +1691,6 @@ else
 
 	// Index the test post so searching for it works
 	require PUN_ROOT.'include/search_idx.php';
-	$pun_config['o_default_lang'] = $default_lang;
 	update_search_index('post', 1, $message, $subject);
 
 	$db->end_transaction();
@@ -1715,7 +1710,7 @@ else
 
 	// Attempt to write config.php and serve it up for download if writing fails
 	$written = false;
-	if (is_writable(PUN_ROOT))
+	if (forum_is_writable(PUN_ROOT))
 	{
 		$fh = @fopen(PUN_ROOT.'config.php', 'wb');
 		if ($fh)

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Copyright (C) 2008-2011 FluxBB
+ * Copyright (C) 2008-2012 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.4.7');
+define('UPDATE_TO', '1.4.8');
 
 define('UPDATE_TO_DB_REVISION', 15);
 define('UPDATE_TO_SI_REVISION', 2);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2008-2011 FluxBB
+ * Copyright (C) 2008-2012 FluxBB
  * based on code by Rickard Andersson copyright (C) 2002-2008 PunBB
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
@@ -1630,7 +1630,7 @@ function remove_bad_characters($array)
 	$array = utf8_bad_strip($array);
 
 	// Remove control characters
-	$array = preg_replace('%[\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]%', '', $array);
+	$array = preg_replace('%[\x00-\x08\x0b-\x0c\x0e-\x1f]%', '', $array);
 
 	// Replace some "bad" characters
 	$array = str_replace(array_keys($bad_utf8_chars), array_values($bad_utf8_chars), $array);
@@ -1754,7 +1754,7 @@ function forum_list_plugins($is_admin)
 //
 // Split text into chunks ($inside contains all text inside $start and $end, and $outside contains all text outside)
 //
-function split_text($text, $start, $end, &$errors, $retab = true)
+function split_text($text, $start, $end, $retab = true)
 {
 	global $pun_config, $lang_common;
 
@@ -1782,7 +1782,7 @@ function split_text($text, $start, $end, &$errors, $retab = true)
 // Extract blocks from a text with a starting and ending string
 // This function always matches the most outer block so nesting is possible
 //
-function extract_blocks($text, $start, $end, &$errors = array(), $retab = true)
+function extract_blocks($text, $start, $end, $retab = true)
 {
 	global $pun_config;
 
@@ -1971,6 +1971,65 @@ function ucp_preg_replace($pattern, $replace, $subject)
 
 	return $replaced;
 }
+
+//
+// Replace four-byte characters with a question mark
+//
+// As MySQL cannot properly handle four-byte characters with the default utf-8
+// charset up until version 5.5.3 (where a special charset has to be used), they
+// need to be replaced, by question marks in this case. 
+//
+function strip_bad_multibyte_chars($str)
+{
+	$result = '';
+	$length = strlen($str);
+	
+	for ($i = 0; $i < $length; $i++)
+	{
+		// Replace four-byte characters (11110www 10zzzzzz 10yyyyyy 10xxxxxx)
+		$ord = ord($str[$i]);
+		if ($ord >= 240 && $ord <= 244)
+		{
+			$result .= '?';
+			$i += 3;
+		}
+		else
+		{
+			$result .= $str[$i];
+		}
+	}
+	
+	return $result;
+}
+
+//
+// Check whether a file/folder is writable.
+//
+// This function also works on Windows Server where ACLs seem to be ignored.
+//
+function forum_is_writable($path)
+{
+	if (is_dir($path))
+	{
+		$path = rtrim($path, '/').'/';
+		return forum_is_writable($path.uniqid(mt_rand()).'.tmp');
+	}
+
+	// Check temporary file for read/write capabilities
+	$rm = file_exists($path);
+	$f = @fopen($path, 'a');
+
+	if ($f === false)
+		return false;
+
+	fclose($f);
+
+	if (!$rm)
+		@unlink($path);
+
+	return true;
+}
+
 
 // DEBUG FUNCTIONS BELOW
 
