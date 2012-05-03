@@ -15,7 +15,7 @@ require PUN_ROOT.'include/common_admin.php';
 
 
 if ($pun_user['g_id'] != PUN_ADMIN)
-	message($lang_common['No permission']);
+	message($lang_common['No permission'], false, '403 Forbidden');
 
 // Load the admin_categories.php language file
 require PUN_ROOT.'lang/'.$admin_language.'/admin_categories.php';
@@ -133,7 +133,7 @@ else if (isset($_POST['update'])) // Change position and name of the categories
 	foreach ($categories as $cat_id => $cur_cat)
 	{
 		$cur_cat['name'] = pun_trim($cur_cat['name']);
-		$cur_cat['order'] = trim($cur_cat['order']);
+		$cur_cat['order'] = pun_trim($cur_cat['order']);
 
 		if ($cur_cat['name'] == '')
 			message($lang_admin_categories['Must enter name message']);

@@ -15,7 +15,7 @@ require PUN_ROOT.'include/common_admin.php';
 
 
 if (!$pun_user['is_admmod'])
-	message($lang_common['No permission']);
+	message($lang_common['No permission'], false, '403 Forbidden');
 
 // Load the admin_users.php language file
 require PUN_ROOT.'lang/'.$admin_language.'/admin_users.php';
@@ -123,7 +123,7 @@ if (isset($_GET['ip_stats']))
 
 if (isset($_GET['show_users']))
 {
-	$ip = trim($_GET['show_users']);
+	$ip = pun_trim($_GET['show_users']);
 
 	if (!@preg_match('%^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$%', $ip) && !@preg_match('%^((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))$%', $ip))
 		message($lang_admin_users['Bad IP message']);
@@ -257,7 +257,7 @@ if (isset($_GET['show_users']))
 else if (isset($_POST['move_users']) || isset($_POST['move_users_comply']))
 {
 	if ($pun_user['g_id'] > PUN_ADMIN)
-		message($lang_common['No permission']);
+		message($lang_common['No permission'], false, '403 Forbidden');
 
 	confirm_referrer('admin_users.php');
 
@@ -383,7 +383,7 @@ else if (isset($_POST['move_users']) || isset($_POST['move_users_comply']))
 else if (isset($_POST['delete_users']) || isset($_POST['delete_users_comply']))
 {
 	if ($pun_user['g_id'] > PUN_ADMIN)
-		message($lang_common['No permission']);
+		message($lang_common['No permission'], false, '403 Forbidden');
 
 	confirm_referrer('admin_users.php');
 
@@ -532,7 +532,7 @@ else if (isset($_POST['delete_users']) || isset($_POST['delete_users_comply']))
 else if (isset($_POST['ban_users']) || isset($_POST['ban_users_comply']))
 {
 	if ($pun_user['g_id'] != PUN_ADMIN && ($pun_user['g_moderator'] != '1' || $pun_user['g_mod_ban_users'] == '0'))
-		message($lang_common['No permission']);
+		message($lang_common['No permission'], false, '403 Forbidden');
 
 	confirm_referrer('admin_users.php');
 
@@ -680,14 +680,14 @@ else if (isset($_GET['find_user']))
 	$form = array_map('pun_trim', $form);
 	$conditions = $query_str = array();
 
-	$posts_greater = isset($_GET['posts_greater']) ? trim($_GET['posts_greater']) : '';
-	$posts_less = isset($_GET['posts_less']) ? trim($_GET['posts_less']) : '';
-	$last_post_after = isset($_GET['last_post_after']) ? trim($_GET['last_post_after']) : '';
-	$last_post_before = isset($_GET['last_post_before']) ? trim($_GET['last_post_before']) : '';
-	$last_visit_after = isset($_GET['last_visit_after']) ? trim($_GET['last_visit_after']) : '';
-	$last_visit_before = isset($_GET['last_visit_before']) ? trim($_GET['last_visit_before']) : '';
-	$registered_after = isset($_GET['registered_after']) ? trim($_GET['registered_after']) : '';
-	$registered_before = isset($_GET['registered_before']) ? trim($_GET['registered_before']) : '';
+	$posts_greater = isset($_GET['posts_greater']) ? pun_trim($_GET['posts_greater']) : '';
+	$posts_less = isset($_GET['posts_less']) ? pun_trim($_GET['posts_less']) : '';
+	$last_post_after = isset($_GET['last_post_after']) ? pun_trim($_GET['last_post_after']) : '';
+	$last_post_before = isset($_GET['last_post_before']) ? pun_trim($_GET['last_post_before']) : '';
+	$last_visit_after = isset($_GET['last_visit_after']) ? pun_trim($_GET['last_visit_after']) : '';
+	$last_visit_before = isset($_GET['last_visit_before']) ? pun_trim($_GET['last_visit_before']) : '';
+	$registered_after = isset($_GET['registered_after']) ? pun_trim($_GET['registered_after']) : '';
+	$registered_before = isset($_GET['registered_before']) ? pun_trim($_GET['registered_before']) : '';
 	$order_by = isset($_GET['order_by']) && in_array($_GET['order_by'], array('username', 'email', 'num_posts', 'last_post', 'last_visit', 'registered')) ? $_GET['order_by'] : 'username';
 	$direction = isset($_GET['direction']) && $_GET['direction'] == 'DESC' ? 'DESC' : 'ASC';
 	$user_group = isset($_GET['user_group']) ? intval($_GET['user_group']) : -1;

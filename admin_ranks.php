@@ -15,7 +15,7 @@ require PUN_ROOT.'include/common_admin.php';
 
 
 if ($pun_user['g_id'] != PUN_ADMIN)
-	message($lang_common['No permission']);
+	message($lang_common['No permission'], false, '403 Forbidden');
 
 // Load the admin_ranks.php language file
 require PUN_ROOT.'lang/'.$admin_language.'/admin_ranks.php';
@@ -26,7 +26,7 @@ if (isset($_POST['add_rank']))
 	confirm_referrer('admin_ranks.php');
 
 	$rank = pun_trim($_POST['new_rank']);
-	$min_posts = trim($_POST['new_min_posts']);
+	$min_posts = pun_trim($_POST['new_min_posts']);
 
 	if ($rank == '')
 		message($lang_admin_ranks['Must enter title message']);
@@ -59,7 +59,7 @@ else if (isset($_POST['update']))
 	$id = intval(key($_POST['update']));
 
 	$rank = pun_trim($_POST['rank'][$id]);
-	$min_posts = trim($_POST['min_posts'][$id]);
+	$min_posts = pun_trim($_POST['min_posts'][$id]);
 
 	if ($rank == '')
 		message($lang_admin_ranks['Must enter title message']);

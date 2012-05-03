@@ -82,7 +82,7 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 	$temp = preg_replace($re_list, 'preparse_list_tag(\'$2\', \'$1\')', $text);
 
 	// If the regex failed
-	if ($temp === null)
+	if (is_null($temp))
 		$errors[] = $lang_common['BBCode list size error'];
 	else
 		$text = str_replace('*'."\0".']', '*]', $temp);
@@ -144,7 +144,7 @@ function strip_empty_bbcode($text)
 		list($inside, $text) = extract_blocks($text, '[code]', '[/code]');
 
 	// Remove empty tags
-	while (($new_text = preg_replace('%\[(b|u|s|ins|del|em|i|h|colou?r|quote|img|url|email|list|topic|post|forum|user)(?:\=[^\]]*)?\]\s*\[/\1\]%', '', $text)) !== NULL)
+	while (!is_null($new_text = preg_replace('%\[(b|u|s|ins|del|em|i|h|colou?r|quote|img|url|email|list|topic|post|forum|user)(?:\=[^\]]*)?\]\s*\[/\1\]%', '', $text)))
 	{
 		if ($new_text != $text)
 			$text = $new_text;
@@ -166,7 +166,7 @@ function strip_empty_bbcode($text)
 	}
 
 	// Remove empty code tags
-	while (($new_text = preg_replace('%\[(code)\]\s*\[/\1\]%', '', $text)) !== NULL)
+	while (!is_null($new_text = preg_replace('%\[(code)\]\s*\[/\1\]%', '', $text)))
 	{
 		if ($new_text != $text)
 			$text = $new_text;
@@ -675,7 +675,7 @@ function handle_img_tag($url, $is_signature = false, $alt = null)
 {
 	global $lang_common, $pun_user;
 
-	if ($alt == null)
+	if (is_null($alt))
 		$alt = basename($url);
 
 	$img_tag = '<a href="'.$url.'">&lt;'.$lang_common['Image link'].' - '.$alt.'&gt;</a>';

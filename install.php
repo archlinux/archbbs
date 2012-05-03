@@ -7,7 +7,7 @@
  */
 
 // The FluxBB version this script installs
-define('FORUM_VERSION', '1.4.8');
+define('FORUM_VERSION', '1.4.9');
 
 define('FORUM_DB_REVISION', 15);
 define('FORUM_SI_REVISION', 2);
@@ -63,7 +63,7 @@ if (get_magic_quotes_gpc())
 
 
 // If we've been passed a default language, use it
-$install_lang = isset($_REQUEST['install_lang']) ? trim($_REQUEST['install_lang']) : 'English';
+$install_lang = isset($_REQUEST['install_lang']) ? pun_trim($_REQUEST['install_lang']) : 'English';
 
 // If such a language pack doesn't exist, or isn't up-to-date enough to translate this page, default to English
 if (!file_exists(PUN_ROOT.'lang/'.$install_lang.'/install.php'))
@@ -334,7 +334,7 @@ function process_form(the_form)
 <?php endif; ?>
 
 <div class="blockform">
-	<h2><span><?php echo $lang_install['Install'] ?></span></h2>
+	<h2><span><?php echo sprintf($lang_install['Install'], FORUM_VERSION) ?></span></h2>
 	<div class="box">
 		<form id="install" method="post" action="install.php" onsubmit="this.start.disabled=true;if(process_form(this)){return true;}else{this.start.disabled=false;return false;}">
 		<div><input type="hidden" name="form_sent" value="1" /><input type="hidden" name="install_lang" value="<?php echo pun_htmlspecialchars($install_lang) ?>" /></div>
@@ -1663,7 +1663,7 @@ else
 
 	foreach ($pun_config as $conf_name => $conf_value)
 	{
-		$db->query('INSERT INTO '.$db_prefix.'config (conf_name, conf_value) VALUES(\''.$conf_name.'\', '.($conf_value === NULL ? 'NULL' : '\''.$db->escape($conf_value).'\'').')')
+		$db->query('INSERT INTO '.$db_prefix.'config (conf_name, conf_value) VALUES(\''.$conf_name.'\', '.(is_null($conf_value) ? 'NULL' : '\''.$db->escape($conf_value).'\'').')')
 			or error('Unable to insert into table '.$db_prefix.'config. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 	}
 

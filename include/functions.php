@@ -566,7 +566,7 @@ function generate_page_title($page_title, $p = null)
 
 	$page_title = array_reverse($page_title);
 
-	if ($p != null)
+	if (!is_null($p))
 		$page_title[0] .= ' ('.sprintf($lang_common['Page'], forum_number_format($p)).')';
 
 	$crumbs = implode($lang_common['Title separator'], $page_title);
@@ -619,7 +619,7 @@ function get_tracked_topics()
 	if (!$cookie_data)
 		return array('topics' => array(), 'forums' => array());
 
-	if (strlen($cookie_data) > 4048)
+	if (strlen($cookie_data) > FORUM_MAX_COOKIE_SIZE)
 		return array('topics' => array(), 'forums' => array());
 
 	// Unserialize data from cookie
@@ -882,7 +882,7 @@ function paginate($num_pages, $cur_page, $link)
 	{
 		// Add a previous page link
 		if ($num_pages > 1 && $cur_page > 1)
-			$pages[] = '<a'.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page - 1).'">'.$lang_common['Previous'].'</a>';
+			$pages[] = '<a rel="prev" '.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page - 1).'">'.$lang_common['Previous'].'</a>';
 
 		if ($cur_page > 3)
 		{
@@ -913,7 +913,7 @@ function paginate($num_pages, $cur_page, $link)
 
 		// Add a next page link
 		if ($num_pages > 1 && !$link_to_all && $cur_page < $num_pages)
-			$pages[] = '<a'.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page +1).'">'.$lang_common['Next'].'</a>';
+			$pages[] = '<a rel="next" '.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page +1).'">'.$lang_common['Next'].'</a>';
 	}
 
 	return implode(' ', $pages);
@@ -923,9 +923,14 @@ function paginate($num_pages, $cur_page, $link)
 //
 // Display a message
 //
-function message($message, $no_back_link = false)
+function message($message, $no_back_link = false, $http_status = null)
 {
 	global $db, $lang_common, $pun_config, $pun_start, $tpl_main, $pun_user;
+
+	// Did we receive a custom header?
+	if(!is_null($http_status)) {
+		header('HTTP/1.1 ' . $http_status);
+	}
 
 	if (!defined('PUN_HEADER'))
 	{
@@ -965,10 +970,10 @@ function format_time($timestamp, $date_only = false, $date_format = null, $time_
 	$timestamp += $diff;
 	$now = time();
 
-	if($date_format == null)
+	if(is_null($date_format))
 		$date_format = $forum_date_formats[$pun_user['date_format']];
 
-	if($time_format == null)
+	if(is_null($time_format))
 		$time_format = $forum_time_formats[$pun_user['time_format']];
 
 	$date = gmdate($date_format, $timestamp);
@@ -1155,7 +1160,7 @@ function pun_linebreaks($str)
 //
 function pun_trim($str, $charlist = false)
 {
-	return utf8_trim($str, $charlist);
+	return is_string($str) ? utf8_trim($str, $charlist) : '';
 }
 
 //
@@ -1175,7 +1180,7 @@ function is_all_uppercase($string)
 //
 function array_insert(&$input, $offset, $element, $key = null)
 {
-	if ($key == null)
+	if (is_null($key))
 		$key = $offset;
 
 	// Determine the proper offset if we're using a string
@@ -1501,7 +1506,7 @@ H2 {MARGIN: 0; COLOR: #FFFFFF; BACKGROUND-COLOR: #B84623; FONT-SIZE: 1.1em; PADD
 	<div>
 <?php
 
-	if (defined('PUN_DEBUG') && $file !== null && $line !== null)
+	if (defined('PUN_DEBUG') && !is_null($file) && !is_null($line))
 	{
 		echo "\t\t".'<strong>File:</strong> '.$file.'<br />'."\n\t\t".'<strong>Line:</strong> '.$line.'<br /><br />'."\n\t\t".'<strong>FluxBB reported</strong>: '.$message."\n";
 
@@ -1651,7 +1656,7 @@ function file_size($size)
 	for ($i = 0; $size > 1024; $i++)
 		$size /= 1024;
 
-	return sprintf($lang_common['Size unit '.$units[$i]], round($size, 2));;
+	return sprintf($lang_common['Size unit '.$units[$i]], round($size, 2));
 }
 
 
@@ -1977,13 +1982,13 @@ function ucp_preg_replace($pattern, $replace, $subject)
 //
 // As MySQL cannot properly handle four-byte characters with the default utf-8
 // charset up until version 5.5.3 (where a special charset has to be used), they
-// need to be replaced, by question marks in this case. 
+// need to be replaced, by question marks in this case.
 //
 function strip_bad_multibyte_chars($str)
 {
 	$result = '';
 	$length = strlen($str);
-	
+
 	for ($i = 0; $i < $length; $i++)
 	{
 		// Replace four-byte characters (11110www 10zzzzzz 10yyyyyy 10xxxxxx)
@@ -1998,7 +2003,7 @@ function strip_bad_multibyte_chars($str)
 			$result .= $str[$i];
 		}
 	}
-	
+
 	return $result;
 }
 
