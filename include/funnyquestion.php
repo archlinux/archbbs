@@ -3,6 +3,7 @@
 if (!defined('PUN'))
 	exit;
 
+!isset($funnyquestion_disabled) && $funnyquestion_disabled = false;
 !isset($funnyquestion_hash) && $funnyquestion_hash = dirname(__FILE__);
 !isset($funny_questions) && $funny_questions = array(
 	'What is the Ultimate Answer to the Ultimate Question of Life, The Universe, and Everything?' => '42'
@@ -42,9 +43,9 @@ function has_funnycookie()
 
 function get_funnyquestion()
 {
-	global $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $lang_common, $pun_user, $funnyquestion_remember;
+	global $funnyquestion_disabled, $funnyquestion_hash, $funny_questions, $lang_funnyquestion, $lang_common, $pun_user, $funnyquestion_remember;
 
-	if (!$pun_user['is_guest'] || has_funnycookie()) {
+	if ($funnyquestion_disabled || !$pun_user['is_guest'] || has_funnycookie()) {
 		return '';
 	}
 
@@ -70,9 +71,9 @@ function get_funnyquestion()
 
 function check_funnyquestion()
 {
-	global $funnyquestion_hash, $funnyquestion_timeout, $funnyquestion_wait, $funny_questions, $pun_user, $funnyquestion_remember;
+	global $funnyquestion_disabled, $funnyquestion_hash, $funnyquestion_timeout, $funnyquestion_wait, $funny_questions, $pun_user, $funnyquestion_remember;
 
-	if (!$pun_user['is_guest'] || has_funnycookie()) {
+	if ($funnyquestion_disabled || !$pun_user['is_guest'] || has_funnycookie()) {
 		return true;
 	}
 
