@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.4.9');
+define('UPDATE_TO', '1.5.0');
 
-define('UPDATE_TO_DB_REVISION', 15);
+define('UPDATE_TO_DB_REVISION', 18);
 define('UPDATE_TO_SI_REVISION', 2);
 define('UPDATE_TO_PARSER_REVISION', 2);
 
@@ -1022,6 +1022,13 @@ switch ($stage)
 		// Change the search_data field to mediumtext
 		$db->alter_field('search_cache', 'search_data', 'MEDIUMTEXT', true) or error('Unable to alter search_data field', __FILE__, __LINE__, $db->error());
 
+		// Add the group promotion fields to the groups table
+		$db->add_field('groups', 'g_promote_min_posts', 'INT(10) UNSIGNED', false, 0, 'g_user_title') or error('Unable to add g_promote_min_posts field', __FILE__, __LINE__, $db->error());
+		$db->add_field('groups', 'g_promote_next_group', 'INT(10) UNSIGNED', false, 0, 'g_promote_min_posts') or error('Unable to add g_promote_next_group field', __FILE__, __LINE__, $db->error());
+
+		// Add a field for the per-group permission to post links
+		$db->add_field('groups', 'g_post_links', 'TINYINT(1)', false, 1, 'g_delete_topics') or error('Unable to add per-group permission to post links', __FILE__, __LINE__, $db->error());
+
 		// Incase we had the fulltext search extension installed (1.3-legacy), remove it
 		$db->drop_index('topics', 'subject_idx') or error('Unable to drop subject_idx index', __FILE__, __LINE__, $db->error());
 		$db->drop_index('posts', 'message_idx') or error('Unable to drop message_idx index', __FILE__, __LINE__, $db->error());
@@ -1162,6 +1169,14 @@ switch ($stage)
 		// For MySQL(i) without InnoDB, change the engine of the online table (for performance reasons)
 		if ($db_type == 'mysql' || $db_type == 'mysqli')
 			$db->query('ALTER TABLE '.$db->prefix.'online ENGINE = MyISAM') or error('Unable to change engine type of online table to MyISAM', __FILE__, __LINE__, $db->error());
+
+		// Remove config option o_ranks
+		if (array_key_exists('o_ranks', $pun_config))
+			$db->query('DELETE FROM '.$db->prefix.'config WHERE conf_name=\'o_ranks\'') or error('Unable to remove config value \'o_ranks\'', __FILE__, __LINE__, $db->error());
+
+		// Remove the ranks table
+		if ($db->table_exists('ranks'))
+			$db->drop_table('ranks') or error('Unable to drop ranks table', __FILE__, __LINE__, $db->error());
 
 		// Should we do charset conversion or not?
 		if (strpos($cur_version, '1.2') === 0 && isset($_POST['convert_charset']))
@@ -1321,7 +1336,7 @@ switch ($stage)
 
 	// Convert posts
 	case 'conv_posts':
-		$query_str = '?stage=conv_ranks&req_old_charset='.$old_charset;
+		$query_str = '?stage=conv_reports&req_old_charset='.$old_charset;
 
 		function _conv_posts($cur_item, $old_charset)
 		{
@@ -1340,24 +1355,6 @@ switch ($stage)
 
 		if ($end_at !== true)
 			$query_str = '?stage=conv_posts&req_old_charset='.$old_charset.'&start_at='.$end_at;
-
-		break;
-
-
-	// Convert ranks
-	case 'conv_ranks':
-		$query_str = '?stage=conv_reports&req_old_charset='.$old_charset;
-
-		echo sprintf($lang_update['Converting'], $lang_update['ranks']).'<br />'."\n";
-
-		function _conv_ranks($cur_item, $old_charset)
-		{
-			convert_to_utf8($cur_item['rank'], $old_charset);
-
-			return $cur_item;
-		}
-
-		convert_table_utf8($db->prefix.'ranks', '_conv_ranks', $old_charset, 'id');
 
 		break;
 

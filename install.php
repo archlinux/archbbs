@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script installs
-define('FORUM_VERSION', '1.4.9');
+define('FORUM_VERSION', '1.5.0');
 
-define('FORUM_DB_REVISION', 15);
+define('FORUM_DB_REVISION', 18);
 define('FORUM_SI_REVISION', 2);
 define('FORUM_PARSER_REVISION', 2);
 
@@ -849,6 +849,16 @@ else
 				'datatype'		=> 'VARCHAR(50)',
 				'allow_null'	=> true
 			),
+			'g_promote_min_posts'		=> array(
+				'datatype'		=> 'INT(10) UNSIGNED',
+				'allow_null'	=> false,
+				'default'		=> '0'
+			),
+			'g_promote_next_group'		=> array(
+				'datatype'		=> 'INT(10) UNSIGNED',
+				'allow_null'	=> false,
+				'default'		=> '0'
+			),
 			'g_moderator'				=> array(
 				'datatype'		=> 'TINYINT(1)',
 				'allow_null'	=> false,
@@ -905,6 +915,11 @@ else
 				'default'		=> '1'
 			),
 			'g_delete_topics'			=> array(
+				'datatype'		=> 'TINYINT(1)',
+				'allow_null'	=> false,
+				'default'		=> '1'
+			),
+			'g_post_links'				=> array(
 				'datatype'		=> 'TINYINT(1)',
 				'allow_null'	=> false,
 				'default'		=> '1'
@@ -1068,29 +1083,6 @@ else
 	);
 
 	$db->create_table('posts', $schema) or error('Unable to create posts table', __FILE__, __LINE__, $db->error());
-
-
-	$schema = array(
-		'FIELDS'		=> array(
-			'id'			=> array(
-				'datatype'		=> 'SERIAL',
-				'allow_null'	=> false
-			),
-			'rank'			=> array(
-				'datatype'		=> 'VARCHAR(50)',
-				'allow_null'	=> false,
-				'default'		=> '\'\''
-			),
-			'min_posts'		=> array(
-				'datatype'		=> 'MEDIUMINT(8) UNSIGNED',
-				'allow_null'	=> false,
-				'default'		=> '0'
-			)
-		),
-		'PRIMARY KEY'	=> array('id')
-	);
-
-	$db->create_table('ranks', $schema) or error('Unable to create ranks table', __FILE__, __LINE__, $db->error());
 
 
 	$schema = array(
@@ -1611,7 +1603,6 @@ else
 		'o_quickpost'				=> 1,
 		'o_users_online'			=> 1,
 		'o_censoring'				=> 0,
-		'o_ranks'					=> 1,
 		'o_show_dot'				=> 0,
 		'o_topic_views'				=> 1,
 		'o_quickjump'				=> 1,
@@ -1670,12 +1661,6 @@ else
 	// Insert some other default data
 	$subject = $lang_install['Test post'];
 	$message = $lang_install['Message'];
-
-	$db->query('INSERT INTO '.$db_prefix.'ranks (rank, min_posts) VALUES(\''.$db->escape($lang_install['New member']).'\', 0)')
-		or error('Unable to insert into table '.$db_prefix.'ranks. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
-
-	$db->query('INSERT INTO '.$db_prefix.'ranks (rank, min_posts) VALUES(\''.$db->escape($lang_install['Member']).'\', 10)')
-		or error('Unable to insert into table '.$db_prefix.'ranks. Please check your configuration and try again', __FILE__, __LINE__, $db->error());
 
 	$db->query('INSERT INTO '.$db_prefix.'categories (cat_name, disp_position) VALUES(\''.$db->escape($lang_install['Test category']).'\', 1)')
 		or error('Unable to insert into table '.$db_prefix.'categories. Please check your configuration and try again', __FILE__, __LINE__, $db->error());

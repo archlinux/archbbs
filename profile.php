@@ -761,20 +761,30 @@ else if (isset($_POST['form_sent']))
 		case 'personal':
 		{
 			$form = array(
-				'realname'		=> pun_trim($_POST['form']['realname']),
-				'url'			=> pun_trim($_POST['form']['url']),
-				'location'		=> pun_trim($_POST['form']['location']),
+				'realname'		=> isset($_POST['form']['realname']) ? pun_trim($_POST['form']['realname']) : '',
+				'url'			=> isset($_POST['form']['url']) ? pun_trim($_POST['form']['url']) : '',
+				'location'		=> isset($_POST['form']['location']) ? pun_trim($_POST['form']['location']) : '',
 			);
 
 			// Add http:// if the URL doesn't contain it already (while allowing https://, too)
-			if ($form['url'] != '')
+			if ($pun_user['g_post_links'] == '1')
 			{
-				$url = url_valid($form['url']);
+				if ($form['url'] != '')
+				{
+					$url = url_valid($form['url']);
 
-				if ($url === false)
-					message($lang_profile['Invalid website URL']);
+					if ($url === false)
+						message($lang_profile['Invalid website URL']);
 
-				$form['url'] = $url['url'];
+					$form['url'] = $url['url'];
+				}
+			}
+			else
+			{
+				if (!empty($form['url']))
+					message($lang_profile['Website not allowed']);
+
+				$form['url'] = '';
 			}
 
 			if ($pun_user['g_id'] == PUN_ADMIN)
@@ -1427,7 +1437,8 @@ else
 							<label><?php echo $lang_profile['Realname'] ?><br /><input type="text" name="form[realname]" value="<?php echo pun_htmlspecialchars($user['realname']) ?>" size="40" maxlength="40" /><br /></label>
 <?php if (isset($title_field)): ?>							<?php echo $title_field ?>
 <?php endif; ?>							<label><?php echo $lang_profile['Location'] ?><br /><input type="text" name="form[location]" value="<?php echo pun_htmlspecialchars($user['location']) ?>" size="30" maxlength="30" /><br /></label>
-							<label><?php echo $lang_profile['Website'] ?><br /><input type="text" name="form[url]" value="<?php echo pun_htmlspecialchars($user['url']) ?>" size="50" maxlength="80" /><br /></label>
+<?php if ($pun_user['g_post_links'] == '1' || $pun_user['g_id'] == PUN_ADMIN) : ?>							<label><?php echo $lang_profile['Website'] ?><br /><input type="text" name="form[url]" value="<?php echo pun_htmlspecialchars($user['url']) ?>" size="50" maxlength="80" /><br /></label>
+<?php endif; ?>
 						</div>
 					</fieldset>
 				</div>
@@ -1524,6 +1535,7 @@ else
 							</div>
 							<ul class="bblinks">
 								<li><span><a href="help.php#bbcode" onclick="window.open(this.href); return false;"><?php echo $lang_common['BBCode'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
+								<li><span><a href="help.php#url" onclick="window.open(this.href); return false;"><?php echo $lang_common['url tag'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1' && $pun_user['g_post_links'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span>
 								<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1' && $pun_config['p_sig_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 								<li><span><a href="help.php#smilies" onclick="window.open(this.href); return false;"><?php echo $lang_common['Smilies'] ?></a> <?php echo ($pun_config['o_smilies_sig'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 							</ul>
