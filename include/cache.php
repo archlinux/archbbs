@@ -10,6 +10,11 @@
 if (!defined('PUN'))
 	exit;
 
+function clear_xcache_php()
+{
+	for ($id = 0; $id < xcache_count(XC_TYPE_PHP); $id++)
+		xcache_clear_cache(XC_TYPE_PHP, $id);
+}
 
 //
 // Generate the config cache PHP script
@@ -36,6 +41,8 @@ function generate_config_cache()
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_config.php');
+	elseif (function_exists('xcache_clear_cache'))
+		clear_xcache_php();
 }
 
 
@@ -64,6 +71,8 @@ function generate_bans_cache()
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_bans.php');
+	elseif (function_exists('xcache_clear_cache'))
+		clear_xcache_php();
 }
 
 
@@ -139,6 +148,8 @@ function generate_quickjump_cache($group_id = false)
 
 		if (function_exists('apc_delete_file'))
 			@apc_delete_file(FORUM_CACHE_DIR.'cache_quickjump_'.$group_id.'.php');
+		elseif (function_exists('xcache_clear_cache'))
+			clear_xcache_php();
 	}
 }
 
@@ -171,6 +182,8 @@ function generate_censoring_cache()
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_censoring.php');
+	elseif (function_exists('xcache_clear_cache'))
+		clear_xcache_php();
 }
 
 
@@ -207,6 +220,8 @@ function generate_stopwords_cache()
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_stopwords.php');
+	elseif (function_exists('xcache_clear_cache'))
+		clear_xcache_php();
 }
 
 
@@ -236,6 +251,8 @@ function generate_users_info_cache()
 
 	if (function_exists('apc_delete_file'))
 		@apc_delete_file(FORUM_CACHE_DIR.'cache_users_info.php');
+	elseif (function_exists('xcache_clear_cache'))
+		clear_xcache_php();
 }
 
 
