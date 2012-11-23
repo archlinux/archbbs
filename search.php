@@ -123,7 +123,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 		{
 			// Flood protection
 			if ($pun_user['last_search'] && (time() - $pun_user['last_search']) < $pun_user['g_search_flood'] && (time() - $pun_user['last_search']) >= 0)
-				message(sprintf($lang_search['Search flood'], $pun_user['g_search_flood']));
+				message(sprintf($lang_search['Search flood'], $pun_user['g_search_flood'], $pun_user['g_search_flood'] - (time() - $pun_user['last_search'])));
 
 			if (!$pun_user['is_guest'])
 				$db->query('UPDATE '.$db->prefix.'users SET last_search='.time().' WHERE id='.$pun_user['id']) or error('Unable to update user', __FILE__, __LINE__, $db->error());
@@ -238,7 +238,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 					}
 				}
 
-				// Sort the results - annoyingly array_multisort re-indexes arrays with numeric keys, so we need to split the keys out into a seperate array then combine them again after
+				// Sort the results - annoyingly array_multisort re-indexes arrays with numeric keys, so we need to split the keys out into a separate array then combine them again after
 				$post_ids = array_keys($keyword_results);
 				$topic_ids = array_values($keyword_results);
 
@@ -360,7 +360,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 				if (!$num_hits)
 					message($lang_search['No user posts']);
 
-				// Pass on the user ID so that we can later know whos posts we're searching for
+				// Pass on the user ID so that we can later know whose posts we're searching for
 				$search_type[2] = $user_id;
 			}
 			// If it's a search for topics by a specific user ID
@@ -372,7 +372,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 				if (!$num_hits)
 					message($lang_search['No user topics']);
 
-				// Pass on the user ID so that we can later know whos topics we're searching for
+				// Pass on the user ID so that we can later know whose topics we're searching for
 				$search_type[2] = $user_id;
 			}
 			// If it's a search for subscribed topics
@@ -815,15 +815,20 @@ if ($pun_config['o_search_all_forums'] == '1' || $pun_user['is_admmod'])
 		if ($cur_forum['cid'] != $cur_category) // A new category since last iteration?
 		{
 			if ($cur_category)
+			{
+				echo "\t\t\t\t\t\t\t\t".'</div>'."\n";
 				echo "\t\t\t\t\t\t\t".'</fieldset>'."\n";
-
+			}
+			
 			echo "\t\t\t\t\t\t\t".'<fieldset><legend><span>'.pun_htmlspecialchars($cur_forum['cat_name']).'</span></legend>'."\n";
+			echo "\t\t\t\t\t\t\t\t".'<div class="rbox">';
 			$cur_category = $cur_forum['cid'];
 		}
 
-		echo "\t\t\t\t\t\t\t\t".'<div class="checklist-item"><span class="fld-input"><input type="checkbox" name="forums[]" id="forum-'.$cur_forum['fid'].'" value="'.$cur_forum['fid'].'" /></span> <label for="forum-'.$cur_forum['fid'].'">'.pun_htmlspecialchars($cur_forum['forum_name']).'</label></div>'."\n";
+		echo "\t\t\t\t\t\t\t\t".'<label><input type="checkbox" name="forums[]" id="forum-'.$cur_forum['fid'].'" value="'.$cur_forum['fid'].'" />'.pun_htmlspecialchars($cur_forum['forum_name']).'</label>'."\n";
 	}
 
+	echo "\t\t\t\t\t\t\t\t".'</div>'."\n";
 	echo "\t\t\t\t\t\t\t".'</fieldset>'."\n";
 	echo "\t\t\t\t\t\t".'</div>'."\n";
 	echo "\t\t\t\t\t\t".'</div>'."\n";

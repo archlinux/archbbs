@@ -66,6 +66,22 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 {
 	global $pun_config, $lang_common, $lang_post, $re_list;
 
+	// Remove empty tags
+	while (($new_text = strip_empty_bbcode($text)) !== false)
+	{
+		if ($new_text != $text)
+		{
+			$text = $new_text;
+			if ($new_text == '')
+			{
+				$errors[] = $lang_post['Empty after strip'];
+				return '';
+			}
+		}
+		else
+			break;
+	}
+
 	if ($is_signature)
 	{
 		global $lang_profile;
@@ -661,6 +677,9 @@ function handle_url_tag($url, $link = '', $bbcode = false)
 	else if (!preg_match('#^([a-z0-9]{3,6})://#', $url)) // Else if it doesn't start with abcdef://, we add http://
 		$full_url = 'http://'.$full_url;
 
+	if ($bbcode === false && url_valid($full_url) === false)
+		$bbcode = true;
+
 	// Ok, not very pretty :-)
 	if ($bbcode)
 	{
@@ -832,7 +851,7 @@ function do_clickable($text)
 	$text = ' '.$text;
 
 	$text = ucp_preg_replace('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(https?|ftp|news){1}://([\p{L}\p{N}\-]+\.([\p{L}\p{N}\-]+\.)*[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%uie', 'stripslashes(\'$1$2$3$4\').handle_url_tag(\'$5://$6\', \'$5://$6\', true).stripslashes(\'$4$10$11$12\')', $text);
-	$text = ucp_preg_replace('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www|ftp)\.(([\p{L}\p{N}\-]+\.)*[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%uie', 'stripslashes(\'$1$2$3$4\').handle_url_tag(\'$5.$6\', \'$5.$6\', true).stripslashes(\'$4$10$11$12\')', $text);
+	$text = ucp_preg_replace('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www|ftp)\.(([\p{L}\p{N}\-]+\.)+[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%uie', 'stripslashes(\'$1$2$3$4\').handle_url_tag(\'$5.$6\', \'$5.$6\', true).stripslashes(\'$4$10$11$12\')', $text);
 
 	return substr($text, 1);
 }

@@ -681,7 +681,7 @@ function delete_avatar($user_id)
 
 
 //
-// Delete a topic and all of it's posts
+// Delete a topic and all of its posts
 //
 function delete_topic($topic_id)
 {
@@ -853,7 +853,7 @@ function paginate($num_pages, $cur_page, $link)
 	{
 		// Add a previous page link
 		if ($num_pages > 1 && $cur_page > 1)
-			$pages[] = '<a rel="prev" '.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page - 1).'">'.$lang_common['Previous'].'</a>';
+			$pages[] = '<a rel="prev"'.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page - 1).'">'.$lang_common['Previous'].'</a>';
 
 		if ($cur_page > 3)
 		{
@@ -884,7 +884,7 @@ function paginate($num_pages, $cur_page, $link)
 
 		// Add a next page link
 		if ($num_pages > 1 && !$link_to_all && $cur_page < $num_pages)
-			$pages[] = '<a rel="next" '.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page +1).'">'.$lang_common['Next'].'</a>';
+			$pages[] = '<a rel="next"'.(empty($pages) ? ' class="item1"' : '').' href="'.$link.'&amp;p='.($cur_page +1).'">'.$lang_common['Next'].'</a>';
 	}
 
 	return implode(' ', $pages);
@@ -1182,7 +1182,7 @@ function maintenance_message()
 	header('Pragma: no-cache'); // For HTTP/1.0 compatibility
 
 	// Send the Content-type header in case the web server is setup to send something else
-	header('Content-type: text/html; charset=utf-8');
+	header('Content-type: '.get_mime().'; charset=utf-8');
 
 	// Deal with newlines, tabs and multiple spaces
 	$pattern = array("\t", '  ', '  ');
@@ -1240,6 +1240,7 @@ function maintenance_message()
 	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_common['Maintenance']);
 
 ?>
+<meta http-equiv="Content-Type" content="<?php echo get_mime() ?>; charset=utf-8" />
 <title><?php echo generate_page_title($page_title) ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $pun_user['style'].'.css' ?>" />
 <?php
@@ -1297,7 +1298,10 @@ function redirect($destination_url, $message)
 
 	// If the delay is 0 seconds, we might as well skip the redirect all together
 	if ($pun_config['o_redirect_delay'] == '0')
+	{
 		header('Location: '.str_replace('&amp;', '&', $destination_url));
+		exit;
+	}
 
 	// Send no-cache headers
 	header('Expires: Thu, 21 Jul 1977 07:30:00 GMT'); // When yours truly first set eyes on this world! :)
@@ -1306,7 +1310,7 @@ function redirect($destination_url, $message)
 	header('Pragma: no-cache'); // For HTTP/1.0 compatibility
 
 	// Send the Content-type header in case the web server is setup to send something else
-	header('Content-type: text/html; charset=utf-8');
+	header('Content-type: '.get_mime().'; charset=utf-8');
 
 	if (file_exists(PUN_ROOT.'style/'.$pun_user['style'].'/redirect.tpl'))
 	{
@@ -1359,7 +1363,8 @@ function redirect($destination_url, $message)
 	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_common['Redirecting']);
 
 ?>
-<meta http-equiv="refresh" content="<?php echo $pun_config['o_redirect_delay'] ?>;URL=<?php echo str_replace(array('<', '>', '"'), array('&lt;', '&gt;', '&quot;'), $destination_url) ?>" />
+<meta http-equiv="Content-Type" content="<?php echo get_mime() ?>; charset=utf-8" />
+<meta http-equiv="refresh" content="<?php echo $pun_config['o_redirect_delay'] ?>;URL=<?php echo $destination_url ?>" />
 <title><?php echo generate_page_title($page_title) ?></title>
 <link rel="stylesheet" type="text/css" href="style/<?php echo $pun_user['style'].'.css' ?>" />
 <?php
@@ -2004,6 +2009,21 @@ function forum_is_writable($path)
 		@unlink($path);
 
 	return true;
+}
+
+
+//
+// This function returns the correct mime type to serve with XHTML
+//
+function get_mime()
+{
+	if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/xhtml+xml') !== false)
+		return 'application/xhtml+xml';
+	// special check for the W3C validation service
+	else if (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'W3C_Validator') !== false)
+		return 'application/xhtml+xml';
+	else
+		return 'text/html';
 }
 
 

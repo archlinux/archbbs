@@ -280,7 +280,7 @@ generate_admin_menu('maintenance');
 								<tr>
 									<th scope="row"><?php echo $lang_admin_maintenance['Empty index label'] ?></th>
 									<td class="inputadmin">
-										<span><input type="checkbox" name="i_empty_index" value="1" tabindex="3" checked="checked" />&#160;&#160;<?php echo $lang_admin_maintenance['Empty index help'] ?></span>
+										<label><input type="checkbox" name="i_empty_index" value="1" tabindex="3" checked="checked" />&#160;&#160;<?php echo $lang_admin_maintenance['Empty index help'] ?></label>
 									</td>
 								</tr>
 							</table>
@@ -308,8 +308,9 @@ generate_admin_menu('maintenance');
 								<tr>
 									<th scope="row"><?php echo $lang_admin_maintenance['Prune sticky label'] ?></th>
 									<td>
-										<input type="radio" name="prune_sticky" value="1" tabindex="6" checked="checked" />&#160;<strong><?php echo $lang_admin_common['Yes'] ?></strong>&#160;&#160;&#160;<input type="radio" name="prune_sticky" value="0" />&#160;<strong><?php echo $lang_admin_common['No'] ?></strong>
-										<span><?php echo $lang_admin_maintenance['Prune sticky help'] ?></span>
+										<label class="conl"><input type="radio" name="prune_sticky" value="1" tabindex="6" checked="checked" />&#160;<strong><?php echo $lang_admin_common['Yes'] ?></strong></label>
+										<label class="conl"><input type="radio" name="prune_sticky" value="0" />&#160;<strong><?php echo $lang_admin_common['No'] ?></strong></label>
+										<span class="clearb"><?php echo $lang_admin_maintenance['Prune sticky help'] ?></span>
 									</td>
 								</tr>
 								<tr>

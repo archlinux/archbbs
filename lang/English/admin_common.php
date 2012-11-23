@@ -1,6 +1,6 @@
 <?php
 
-// Language definitions used in admin_common
+// Language definitions used in admin_common.php
 $lang_admin_common = array(
 
 // The menu
@@ -19,6 +19,7 @@ $lang_admin_common = array(
 'Prune'					=>	'Prune',
 'Maintenance'			=>	'Maintenance',
 'Reports'				=>	'Reports',
+'Server statistics'				=>	'Server statistics',
 
 'Admin'					=>	'Admin',
 'Go back'				=>	'Go back',

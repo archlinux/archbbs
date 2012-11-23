@@ -28,7 +28,7 @@ if ($action != 'change_pass' || !isset($_GET['key']))
 		message($lang_common['No permission'], false, '403 Forbidden');
 }
 
-// Load the profile.php/register.php language file
+// Load the prof_reg.php language file
 require PUN_ROOT.'lang/'.$pun_user['language'].'/prof_reg.php';
 
 // Load the profile.php language file
@@ -61,12 +61,12 @@ if ($action == 'change_pass')
 		}
 	}
 
-	// Make sure we are allowed to change this users password
+	// Make sure we are allowed to change this user's password
 	if ($pun_user['id'] != $id)
 	{
-		if (!$pun_user['is_admmod']) // A regular user trying to change another users password?
+		if (!$pun_user['is_admmod']) // A regular user trying to change another user's password?
 			message($lang_common['No permission'], false, '403 Forbidden');
-		else if ($pun_user['g_moderator'] == '1') // A moderator trying to change a users password?
+		else if ($pun_user['g_moderator'] == '1') // A moderator trying to change a user's password?
 		{
 			$result = $db->query('SELECT u.group_id, g.g_moderator FROM '.$db->prefix.'users AS u INNER JOIN '.$db->prefix.'groups AS g ON (g.g_id=u.group_id) WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 			if (!$db->num_rows($result))
@@ -157,12 +157,12 @@ if ($action == 'change_pass')
 
 else if ($action == 'change_email')
 {
-	// Make sure we are allowed to change this users email
+	// Make sure we are allowed to change this user's email
 	if ($pun_user['id'] != $id)
 	{
-		if (!$pun_user['is_admmod']) // A regular user trying to change another users email?
+		if (!$pun_user['is_admmod']) // A regular user trying to change another user's email?
 			message($lang_common['No permission'], false, '403 Forbidden');
-		else if ($pun_user['g_moderator'] == '1') // A moderator trying to change a users email?
+		else if ($pun_user['g_moderator'] == '1') // A moderator trying to change a user's email?
 		{
 			$result = $db->query('SELECT u.group_id, g.g_moderator FROM '.$db->prefix.'users AS u INNER JOIN '.$db->prefix.'groups AS g ON (g.g_id=u.group_id) WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 			if (!$db->num_rows($result))
@@ -288,7 +288,7 @@ else if ($action == 'change_email')
 <div class="blockform">
 	<h2><span><?php echo $lang_profile['Change email'] ?></span></h2>
 	<div class="box">
-		<form id="change_email" method="post" action="profile.php?action=change_email&amp;id=<?php echo $id ?>" id="change_email" onsubmit="return process_form(this)">
+		<form id="change_email" method="post" action="profile.php?action=change_email&amp;id=<?php echo $id ?>" onsubmit="return process_form(this)">
 			<div class="inform">
 				<fieldset>
 					<legend><?php echo $lang_profile['Email legend'] ?></legend>
@@ -677,13 +677,13 @@ else if (isset($_POST['delete_user']) || isset($_POST['delete_user_comply']))
 else if (isset($_POST['form_sent']))
 {
 	// Fetch the user group of the user we are editing
-	$result = $db->query('SELECT u.username, u.group_id, g.g_moderator FROM '.$db->prefix.'users AS u INNER JOIN '.$db->prefix.'groups AS g ON (g.g_id=u.group_id) WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
+	$result = $db->query('SELECT u.username, u.group_id, g.g_moderator FROM '.$db->prefix.'users AS u LEFT JOIN '.$db->prefix.'groups AS g ON (g.g_id=u.group_id) WHERE u.id='.$id) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 	if (!$db->num_rows($result))
 		message($lang_common['Bad request'], false, '404 Not Found');
 
 	list($old_username, $group_id, $is_moderator) = $db->fetch_row($result);
 
-	if ($pun_user['id'] != $id &&																	// If we arent the user (i.e. editing your own profile)
+	if ($pun_user['id'] != $id &&																	// If we aren't the user (i.e. editing your own profile)
 		(!$pun_user['is_admmod'] ||																	// and we are not an admin or mod
 		($pun_user['g_id'] != PUN_ADMIN &&															// or we aren't an admin and ...
 		($pun_user['g_mod_edit_users'] == '0' ||													// mods aren't allowed to edit users
@@ -1005,7 +1005,7 @@ if ($user['signature'] != '')
 
 
 // View or edit?
-if ($pun_user['id'] != $id &&																	// If we arent the user (i.e. editing your own profile)
+if ($pun_user['id'] != $id &&																	// If we aren't the user (i.e. editing your own profile)
 	(!$pun_user['is_admmod'] ||																	// and we are not an admin or mod
 	($pun_user['g_id'] != PUN_ADMIN &&															// or we aren't an admin and ...
 	($pun_user['g_mod_edit_users'] == '0' ||													// mods aren't allowed to edit users
@@ -1535,7 +1535,7 @@ else
 							</div>
 							<ul class="bblinks">
 								<li><span><a href="help.php#bbcode" onclick="window.open(this.href); return false;"><?php echo $lang_common['BBCode'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
-								<li><span><a href="help.php#url" onclick="window.open(this.href); return false;"><?php echo $lang_common['url tag'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1' && $pun_user['g_post_links'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span>
+								<li><span><a href="help.php#url" onclick="window.open(this.href); return false;"><?php echo $lang_common['url tag'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1' && $pun_user['g_post_links'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 								<li><span><a href="help.php#img" onclick="window.open(this.href); return false;"><?php echo $lang_common['img tag'] ?></a> <?php echo ($pun_config['p_sig_bbcode'] == '1' && $pun_config['p_sig_img_tag'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 								<li><span><a href="help.php#smilies" onclick="window.open(this.href); return false;"><?php echo $lang_common['Smilies'] ?></a> <?php echo ($pun_config['o_smilies_sig'] == '1') ? $lang_common['on'] : $lang_common['off']; ?></span></li>
 							</ul>
@@ -1624,8 +1624,8 @@ else
 					<fieldset>
 						<legend><?php echo $lang_profile['Pagination legend'] ?></legend>
 						<div class="infldset">
-							<label class="conl"><?php echo $lang_profile['Topics per page'] ?><br /><input type="text" name="form[disp_topics]" value="<?php echo $user['disp_topics'] ?>" size="6" maxlength="3" /><br /></label>
-							<label class="conl"><?php echo $lang_profile['Posts per page'] ?><br /><input type="text" name="form[disp_posts]" value="<?php echo $user['disp_posts'] ?>" size="6" maxlength="3" /><br /></label>
+							<label class="conl"><?php echo $lang_profile['Topics per page'] ?><br /><input type="text" name="form[disp_topics]" value="<?php echo $user['disp_topics'] ?>" size="6" maxlength="2" /><br /></label>
+							<label class="conl"><?php echo $lang_profile['Posts per page'] ?><br /><input type="text" name="form[disp_posts]" value="<?php echo $user['disp_posts'] ?>" size="6" maxlength="2" /><br /></label>
 							<p class="clearb"><?php echo $lang_profile['Paginate info'] ?> <?php echo $lang_profile['Leave blank'] ?></p>
 						</div>
 					</fieldset>

@@ -1,6 +1,6 @@
-diff -Nura fluxbb-1.5.0.orig/post.php fluxbb-1.5.0/post.php
---- fluxbb-1.5.0.orig/post.php	2012-05-05 12:21:37.000000000 +0200
-+++ fluxbb-1.5.0/post.php	2012-05-07 12:00:29.569052205 +0200
+diff -Nura fluxbb-1.5.1.orig/post.php fluxbb-1.5.1/post.php
+--- fluxbb-1.5.1.orig/post.php	2012-11-13 15:31:41.000000000 +0100
++++ fluxbb-1.5.1/post.php	2012-11-15 08:17:13.268613899 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -16,7 +16,7 @@ diff -Nura fluxbb-1.5.0.orig/post.php fluxbb-1.5.0/post.php
 +	check_funnyquestion() || $errors[] = $lang_funnyquestion['wrong-answer'];
  	// Flood protection
  	if (!isset($_POST['preview']) && $pun_user['last_post'] != '' && (time() - $pun_user['last_post']) < $pun_user['g_post_flood'])
- 		$errors[] = $lang_post['Flood start'].' '.$pun_user['g_post_flood'].' '.$lang_post['flood end'];
+ 		$errors[] = sprintf($lang_post['Flood start'], $pun_user['g_post_flood'], $pun_user['g_post_flood'] - (time() - $pun_user['last_post']));
 @@ -695,6 +697,7 @@
  
  ?>
@@ -25,9 +25,9 @@ diff -Nura fluxbb-1.5.0.orig/post.php fluxbb-1.5.0/post.php
  			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
  		</form>
  	</div>
-diff -Nura fluxbb-1.5.0.orig/register.php fluxbb-1.5.0/register.php
---- fluxbb-1.5.0.orig/register.php	2012-05-05 12:21:37.000000000 +0200
-+++ fluxbb-1.5.0/register.php	2012-05-07 12:00:29.569052205 +0200
+diff -Nura fluxbb-1.5.1.orig/register.php fluxbb-1.5.1/register.php
+--- fluxbb-1.5.1.orig/register.php	2012-11-13 15:31:41.000000000 +0100
++++ fluxbb-1.5.1/register.php	2012-11-15 08:17:13.268613899 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -52,9 +52,9 @@ diff -Nura fluxbb-1.5.0.orig/register.php fluxbb-1.5.0/register.php
  			<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
  		</form>
  	</div>
-diff -Nura fluxbb-1.5.0.orig/viewtopic.php fluxbb-1.5.0/viewtopic.php
---- fluxbb-1.5.0.orig/viewtopic.php	2012-05-05 12:21:37.000000000 +0200
-+++ fluxbb-1.5.0/viewtopic.php	2012-05-07 12:09:25.858573260 +0200
+diff -Nura fluxbb-1.5.1.orig/viewtopic.php fluxbb-1.5.1/viewtopic.php
+--- fluxbb-1.5.1.orig/viewtopic.php	2012-11-13 15:31:41.000000000 +0100
++++ fluxbb-1.5.1/viewtopic.php	2012-11-15 08:17:13.268613899 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');

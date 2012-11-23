@@ -17,7 +17,7 @@ header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache'); // For HTTP/1.0 compatibility
 
 // Send the Content-type header in case the web server is setup to send something else
-header('Content-type: text/html; charset=utf-8');
+header('Content-type: '.get_mime().'; charset=utf-8');
 
 // Load the template
 if (defined('PUN_ADMIN_CONSOLE'))
@@ -41,19 +41,27 @@ else
 $tpl_main = file_get_contents($tpl_file);
 
 // START SUBST - <pun_include "*">
-preg_match_all('%<pun_include "([^/\\\\]*?)\.(php[45]?|inc|html?|txt)">%i', $tpl_main, $pun_includes, PREG_SET_ORDER);
+preg_match_all('%<pun_include "([^"]+)">%i', $tpl_main, $pun_includes, PREG_SET_ORDER);
 
 foreach ($pun_includes as $cur_include)
 {
 	ob_start();
 
+	$file_info = pathinfo($cur_include[1]);
+	
+	if (!in_array($file_info['extension'], array('php', 'php4', 'php5', 'inc', 'html', 'txt'))) // Allow some extensions
+		error(sprintf($lang_common['Pun include extension'], pun_htmlspecialchars($cur_include[0]), basename($tpl_file), pun_htmlspecialchars($file_info['extension'])));
+		
+	if (strpos($file_info['dirname'], '..') !== false) // Don't allow directory traversal
+		error(sprintf($lang_common['Pun include directory'], pun_htmlspecialchars($cur_include[0]), basename($tpl_file)));
+
 	// Allow for overriding user includes, too.
-	if (file_exists($tpl_inc_dir.$cur_include[1].'.'.$cur_include[2]))
-		require $tpl_inc_dir.$cur_include[1].'.'.$cur_include[2];
-	else if (file_exists(PUN_ROOT.'include/user/'.$cur_include[1].'.'.$cur_include[2]))
-		require PUN_ROOT.'include/user/'.$cur_include[1].'.'.$cur_include[2];
+	if (file_exists($tpl_inc_dir.$cur_include[1]))
+		require $tpl_inc_dir.$cur_include[1];
+	else if (file_exists(PUN_ROOT.'include/user/'.$cur_include[1]))
+		require PUN_ROOT.'include/user/'.$cur_include[1];
 	else
-		error(sprintf($lang_common['Pun include error'], htmlspecialchars($cur_include[0]), basename($tpl_file)));
+		error(sprintf($lang_common['Pun include error'], pun_htmlspecialchars($cur_include[0]), basename($tpl_file)));
 
 	$tpl_temp = ob_get_contents();
 	$tpl_main = str_replace($cur_include[0], $tpl_temp, $tpl_main);
@@ -75,8 +83,10 @@ $tpl_main = str_replace('<pun_content_direction>', $lang_common['lang_direction'
 // START SUBST - <pun_head>
 ob_start();
 
-// Define $p if its not set to avoid a PHP notice
+// Define $p if it's not set to avoid a PHP notice
 $p = isset($p) ? $p : null;
+
+echo '<meta http-equiv="Content-Type" content="'.get_mime().'; charset=utf-8" />'."\n";
 
 // Is this a page that we want search index spiders to index?
 if (!defined('PUN_ALLOW_INDEX'))

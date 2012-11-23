@@ -158,7 +158,7 @@ function bbcode2email($text, $wrap_length = 72)
 				$replacement = '['.str_replace('$1', $matches[3], $url).']';
 		}
 
-		// Update the main text if there is a replacment
+		// Update the main text if there is a replacement
 		if (!is_null($replacement))
 		{
 			$text = str_replace($matches[0], $replacement, $text);
@@ -229,14 +229,14 @@ function pun_mail($to, $subject, $message, $reply_to_email = '', $reply_to_name 
 	$from = '"'.encode_mail_text($from_name).'" <'.$from_email.'>';
 	$subject = encode_mail_text($subject);
 
-	$headers = 'From: '.$from."\r\n".'Date: '.gmdate('r')."\r\n".'MIME-Version: 1.0'."\r\n".'Content-transfer-encoding: 8bit'."\r\n".'Content-type: text/plain; charset=utf-8'."\r\n".'X-Mailer: FluxBB Mailer';
+	$headers = 'From: '.$from.PHP_EOL.'Date: '.gmdate('r').PHP_EOL.'MIME-Version: 1.0'.PHP_EOL.'Content-transfer-encoding: 8bit'.PHP_EOL.'Content-type: text/plain; charset=utf-8'.PHP_EOL.'X-Mailer: FluxBB Mailer';
 
 	// If we specified a reply-to email, we deal with it here
 	if (!empty($reply_to_email))
 	{
 		$reply_to = '"'.encode_mail_text($reply_to_name).'" <'.$reply_to_email.'>';
 
-		$headers .= "\r\n".'Reply-To: '.$reply_to;
+		$headers .= PHP_EOL.'Reply-To: '.$reply_to;
 	}
 
 	// Make sure all linebreaks are LF in message (and strip out any NULL bytes)
@@ -260,7 +260,7 @@ function pun_mail($to, $subject, $message, $reply_to_email = '', $reply_to_name 
 
 //
 // This function was originally a part of the phpBB Group forum software phpBB2 (http://www.phpbb.com)
-// They deserve all the credit for writing it. I made small modifications for it to suit PunBB and it's coding standards
+// They deserve all the credit for writing it. I made small modifications for it to suit PunBB and its coding standards
 //
 function server_parse($socket, $expected_response)
 {
@@ -278,7 +278,7 @@ function server_parse($socket, $expected_response)
 
 //
 // This function was originally a part of the phpBB Group forum software phpBB2 (http://www.phpbb.com)
-// They deserve all the credit for writing it. I made small modifications for it to suit PunBB and it's coding standards.
+// They deserve all the credit for writing it. I made small modifications for it to suit PunBB and its coding standards.
 //
 function smtp_mail($to, $subject, $message, $headers = '')
 {
@@ -309,7 +309,20 @@ function smtp_mail($to, $subject, $message, $headers = '')
 
 	if ($pun_config['o_smtp_user'] != '' && $pun_config['o_smtp_pass'] != '')
 	{
-		fwrite($socket, 'EHLO '.$smtp_host."\r\n");
+		// Here we try to determine the *real* hostname (reverse DNS entry preferably)
+		$local_host = php_uname('n');
+
+		// Able to resolve name to IP
+		if (($local_addr = @gethostbyname($local_host)) !== $local_host)
+		{
+			// Able to resolve IP back to name
+			if (($local_name = @gethostbyaddr($local_addr)) !== $local_addr)
+			{
+				$local_host = $local_name;
+			}
+		}
+
+		fwrite($socket, 'EHLO '.$local_host."\r\n");
 		server_parse($socket, '250');
 
 		fwrite($socket, 'AUTH LOGIN'."\r\n");

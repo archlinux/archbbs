@@ -111,7 +111,7 @@ else if (isset($_GET['email']))
 			message($lang_misc['Too long email message']);
 
 		if ($pun_user['last_email_sent'] != '' && (time() - $pun_user['last_email_sent']) < $pun_user['g_email_flood'] && (time() - $pun_user['last_email_sent']) >= 0)
-			message(sprintf($lang_misc['Email flood'], $pun_user['g_email_flood']));
+			message(sprintf($lang_misc['Email flood'], $pun_user['g_email_flood'], $pun_user['g_email_flood'] - (time() - $pun_user['last_email_sent'])));
 
 		// Load the "form email" template
 		$mail_tpl = trim(file_get_contents(PUN_ROOT.'lang/'.$pun_user['language'].'/mail_templates/form_email.tpl'));
@@ -133,11 +133,11 @@ else if (isset($_GET['email']))
 
 		$db->query('UPDATE '.$db->prefix.'users SET last_email_sent='.time().' WHERE id='.$pun_user['id']) or error('Unable to update user', __FILE__, __LINE__, $db->error());
 
-		redirect(htmlspecialchars($_POST['redirect_url']), $lang_misc['Email sent redirect']);
+		redirect(pun_htmlspecialchars($_POST['redirect_url']), $lang_misc['Email sent redirect']);
 	}
 
 
-	// Try to determine if the data in HTTP_REFERER is valid (if not, we redirect to the users profile after the email is sent)
+	// Try to determine if the data in HTTP_REFERER is valid (if not, we redirect to the user's profile after the email is sent)
 	if (!empty($_SERVER['HTTP_REFERER']))
 	{
 		$referrer = parse_url($_SERVER['HTTP_REFERER']);
@@ -164,6 +164,8 @@ else if (isset($_GET['email']))
 
 	if (!isset($redirect_url))
 		$redirect_url = 'profile.php?id='.$recipient_id;
+	else if (preg_match('%viewtopic\.php\?pid=(\d+)$%', $redirect_url, $matches))
+		$redirect_url .= '#p'.$matches[1];
 
 	$page_title = array(pun_htmlspecialchars($pun_config['o_board_title']), $lang_misc['Send email to'].' '.pun_htmlspecialchars($recipient));
 	$required_fields = array('req_subject' => $lang_misc['Email subject'], 'req_message' => $lang_misc['Email message']);
@@ -219,7 +221,7 @@ else if (isset($_GET['report']))
 			message($lang_misc['Reason too long']);
 
 		if ($pun_user['last_report_sent'] != '' && (time() - $pun_user['last_report_sent']) < $pun_user['g_report_flood'] && (time() - $pun_user['last_report_sent']) >= 0)
-			message(sprintf($lang_misc['Report flood'], $pun_user['g_report_flood']));
+			message(sprintf($lang_misc['Report flood'], $pun_user['g_report_flood'], $pun_user['g_report_flood'] - (time() - $pun_user['last_report_sent'])));
 
 		// Get the topic ID
 		$result = $db->query('SELECT topic_id FROM '.$db->prefix.'posts WHERE id='.$post_id) or error('Unable to fetch post info', __FILE__, __LINE__, $db->error());
