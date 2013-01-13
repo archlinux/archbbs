@@ -106,6 +106,13 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 	if ($pun_config['o_make_links'] == '1')
 		$text = do_clickable($text);
 
+	$temp_text = false;
+	if (empty($errors))
+		$temp_text = preparse_tags($text, $errors, $is_signature);
+
+	if ($temp_text !== false)
+		$text = $temp_text;
+
 	// If we split up the message before we have to concatenate it together again (code tags)
 	if (isset($inside))
 	{
@@ -122,13 +129,6 @@ function preparse_bbcode($text, &$errors, $is_signature = false)
 
 		unset($inside);
 	}
-
-	$temp_text = false;
-	if (empty($errors))
-		$temp_text = preparse_tags($text, $errors, $is_signature);
-
-	if ($temp_text !== false)
-		$text = $temp_text;
 
 	// Remove empty tags
 	while (($new_text = strip_empty_bbcode($text)) !== false)
@@ -677,9 +677,6 @@ function handle_url_tag($url, $link = '', $bbcode = false)
 	else if (!preg_match('#^([a-z0-9]{3,6})://#', $url)) // Else if it doesn't start with abcdef://, we add http://
 		$full_url = 'http://'.$full_url;
 
-	if ($bbcode === false && url_valid($full_url) === false)
-		$bbcode = true;
-
 	// Ok, not very pretty :-)
 	if ($bbcode)
 	{
@@ -699,7 +696,7 @@ function handle_url_tag($url, $link = '', $bbcode = false)
 		else
 			$link = stripslashes($link);
 
-		return '<a href="'.$full_url.'">'.$link.'</a>';
+		return '<a href="'.$full_url.'" rel="nofollow">'.$link.'</a>';
 	}
 }
 
@@ -714,7 +711,7 @@ function handle_img_tag($url, $is_signature = false, $alt = null)
 	if (is_null($alt))
 		$alt = basename($url);
 
-	$img_tag = '<a href="'.$url.'">&lt;'.$lang_common['Image link'].' - '.$alt.'&gt;</a>';
+	$img_tag = '<a href="'.$url.'" rel="nofollow">&lt;'.$lang_common['Image link'].' - '.$alt.'&gt;</a>';
 
 	if ($is_signature && $pun_user['show_img_sig'] != '0')
 		$img_tag = '<img class="sigimage" src="'.$url.'" alt="'.$alt.'" />';
