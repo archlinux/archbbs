@@ -35,7 +35,7 @@ forum_remove_bad_characters();
 forum_unregister_globals();
 
 // Disable error reporting for uninitialized variables
-error_reporting(E_ALL);
+error_reporting(E_ALL ^ E_DEPRECATED);
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');

@@ -68,7 +68,7 @@ forum_remove_bad_characters();
 forum_unregister_globals();
 
 // Turn on full PHP error reporting
-error_reporting(E_ALL);
+error_reporting(E_ALL ^ E_DEPRECATED);
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');
