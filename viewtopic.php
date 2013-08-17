@@ -93,6 +93,8 @@ $cur_topic = $db->fetch_assoc($result);
 // Sort out who the moderators are and if we are currently a moderator (or an admin)
 $mods_array = ($cur_topic['moderators'] != '') ? unserialize($cur_topic['moderators']) : array();
 $is_admmod = ($pun_user['g_id'] == PUN_ADMIN || ($pun_user['g_moderator'] == '1' && array_key_exists($pun_user['username'], $mods_array))) ? true : false;
+if ($is_admmod)
+	$admin_ids = get_admin_ids();
 
 // Can we or can we not post replies?
 if ($cur_topic['closed'] == '0')
@@ -262,7 +264,7 @@ while ($cur_post = $db->fetch_assoc($result))
 
 			// Now let's deal with the contact links (Email and URL)
 			if ((($cur_post['email_setting'] == '0' && !$pun_user['is_guest']) || $pun_user['is_admmod']) && $pun_user['g_send_email'] == '1')
-				$user_contacts[] = '<span class="email"><a href="mailto:'.$cur_post['email'].'">'.$lang_common['Email'].'</a></span>';
+				$user_contacts[] = '<span class="email"><a href="mailto:'.pun_htmlspecialchars($cur_post['email']).'">'.$lang_common['Email'].'</a></span>';
 			else if ($cur_post['email_setting'] == '1' && !$pun_user['is_guest'] && $pun_user['g_send_email'] == '1')
 				$user_contacts[] = '<span class="email"><a href="misc.php?email='.$cur_post['poster_id'].'">'.$lang_common['Email'].'</a></span>';
 
@@ -293,7 +295,7 @@ while ($cur_post = $db->fetch_assoc($result))
 			$user_info[] = '<dd><span><a href="moderate.php?get_host='.$cur_post['id'].'" title="'.pun_htmlspecialchars($cur_post['poster_ip']).'">'.$lang_topic['IP address logged'].'</a></span></dd>';
 
 		if ($pun_config['o_show_user_info'] == '1' && $cur_post['poster_email'] != '' && !$pun_user['is_guest'] && $pun_user['g_send_email'] == '1')
-			$user_contacts[] = '<span class="email"><a href="mailto:'.$cur_post['poster_email'].'">'.$lang_common['Email'].'</a></span>';
+			$user_contacts[] = '<span class="email"><a href="mailto:'.pun_htmlspecialchars($cur_post['poster_email']).'">'.$lang_common['Email'].'</a></span>';
 	}
 
 	// Generation post action array (quote, edit, delete etc.)
@@ -319,8 +321,11 @@ while ($cur_post = $db->fetch_assoc($result))
 	else
 	{
 		$post_actions[] = '<li class="postreport"><span><a href="misc.php?report='.$cur_post['id'].'">'.$lang_topic['Report'].'</a></span></li>';
-		$post_actions[] = '<li class="postdelete"><span><a href="delete.php?id='.$cur_post['id'].'">'.$lang_topic['Delete'].'</a></span></li>';
-		$post_actions[] = '<li class="postedit"><span><a href="edit.php?id='.$cur_post['id'].'">'.$lang_topic['Edit'].'</a></span></li>';
+		if ($pun_user['g_id'] == PUN_ADMIN || !in_array($cur_post['poster_id'], $admin_ids))
+		{
+			$post_actions[] = '<li class="postdelete"><span><a href="delete.php?id='.$cur_post['id'].'">'.$lang_topic['Delete'].'</a></span></li>';
+			$post_actions[] = '<li class="postedit"><span><a href="edit.php?id='.$cur_post['id'].'">'.$lang_topic['Edit'].'</a></span></li>';
+		}
 		$post_actions[] = '<li class="postquote"><span><a href="post.php?tid='.$id.'&amp;qid='.$cur_post['id'].'">'.$lang_topic['Quote'].'</a></span></li>';
 	}
 

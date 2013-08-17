@@ -7,9 +7,9 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.5.3');
+define('UPDATE_TO', '1.5.4');
 
-define('UPDATE_TO_DB_REVISION', 18);
+define('UPDATE_TO_DB_REVISION', 20);
 define('UPDATE_TO_SI_REVISION', 2);
 define('UPDATE_TO_PARSER_REVISION', 2);
 
@@ -68,7 +68,7 @@ forum_remove_bad_characters();
 forum_unregister_globals();
 
 // Turn on full PHP error reporting
-error_reporting(E_ALL ^ E_DEPRECATED);
+error_reporting(E_ALL);
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');
@@ -794,7 +794,7 @@ switch ($stage)
 			if (substr($base_url, -1) == '/')
 				$base_url = substr($base_url, 0, -1);
 
-			$db->query('INSERT INTO '.$db->prefix.'config (conf_name, conf_value) VALUES (\'o_base_url\', \''.$db->escape($base_url).'\')') or error('Unable to insert config value \'o_quote_depth\'', __FILE__, __LINE__, $db->error());
+			$db->query('INSERT INTO '.$db->prefix.'config (conf_name, conf_value) VALUES (\'o_base_url\', \''.$db->escape($base_url).'\')') or error('Unable to insert config value \'o_base_url\'', __FILE__, __LINE__, $db->error());
 		}
 
 		if (strpos($cur_version, '1.2') === 0)

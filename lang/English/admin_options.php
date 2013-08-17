@@ -23,6 +23,7 @@ $lang_admin_options = array(
 'Board desc help'					=>	'A short description of this bulletin board (shown at the top of every page). This field may contain HTML.',
 'Base URL label'					=>	'Base URL',
 'Base URL help'						=>	'The complete URL of the board without trailing slash (i.e. http://www.mydomain.com/forums). This <strong>must</strong> be correct in order for all admin and moderator features to work. If you get "Bad referer" errors, it\'s probably incorrect.',
+'Base URL problem'          =>  'Your installation does not support automatic conversion of internationalized domain names. As your base URL contains special characters, you <strong>must</strong> use an online converter in order to avoid "Bad referer" errors.',
 'Timezone label'					=>	'Default time zone',
 'Timezone help'						=>	'The default time zone for guests and users attempting to register for the board.',
 'DST label'							=>	'Adjust for DST',
@@ -115,8 +116,8 @@ $lang_admin_options = array(
 
 // Features section
 'Features subhead'					=>	'Features',
-'Quick post label'					=>	'Quick post',
-'Quick post help'					=>	'When enabled, FluxBB will add a quick post form at the bottom of topics. This way users can post directly from the topic view.',
+'Quick post label'					=>	'Quick reply',
+'Quick post help'					=>	'When enabled, FluxBB will add a quick reply form at the bottom of topics. This way users can post directly from the topic view.',
 'Users online label'				=>	'Users online',
 'Users online help'					=>	'Display info on the index page about guests and registered users currently browsing the board.',
 'Censor words label'				=>	'Censor words',

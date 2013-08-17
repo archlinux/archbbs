@@ -215,6 +215,7 @@ function get_current_protocol()
 	return $protocol;
 }
 
+
 //
 // Fetch the base_url, optionally support HTTPS and HTTP
 //
@@ -233,6 +234,27 @@ function get_base_url($support_https = false)
 	}
 
 	return $base_url;
+}
+
+
+//
+// Fetch admin IDs
+//
+function get_admin_ids()
+{
+	if (file_exists(FORUM_CACHE_DIR.'cache_admins.php'))
+		include FORUM_CACHE_DIR.'cache_admins.php';
+
+	if (!defined('PUN_ADMINS_LOADED'))
+	{
+		if (!defined('FORUM_CACHE_FUNCTIONS_LOADED'))
+			require PUN_ROOT.'include/cache.php';
+
+		generate_admins_cache();
+		require FORUM_CACHE_DIR.'cache_admins.php';
+	}
+
+	return $pun_admins;
 }
 
 
@@ -339,7 +361,10 @@ function pun_setcookie($user_id, $password_hash, $expire)
 //
 function forum_setcookie($name, $value, $expire)
 {
-	global $cookie_path, $cookie_domain, $cookie_secure;
+	global $cookie_path, $cookie_domain, $cookie_secure, $pun_config;
+
+	if ($expire - time() - $pun_config['o_timeout_visit'] < 1)
+		$expire = 0;
 
 	// Enable sending of a P3P header
 	header('P3P: CP="CUR ADM"');
@@ -407,7 +432,7 @@ function check_bans()
 		if ($is_banned)
 		{
 			$db->query('DELETE FROM '.$db->prefix.'online WHERE ident=\''.$db->escape($pun_user['username']).'\'') or error('Unable to delete from online list', __FILE__, __LINE__, $db->error());
-			message($lang_common['Ban message'].' '.(($cur_ban['expire'] != '') ? $lang_common['Ban message 2'].' '.strtolower(format_time($cur_ban['expire'], true)).'. ' : '').(($cur_ban['message'] != '') ? $lang_common['Ban message 3'].'<br /><br /><strong>'.pun_htmlspecialchars($cur_ban['message']).'</strong><br /><br />' : '<br /><br />').$lang_common['Ban message 4'].' <a href="mailto:'.$pun_config['o_admin_email'].'">'.$pun_config['o_admin_email'].'</a>.', true);
+			message($lang_common['Ban message'].' '.(($cur_ban['expire'] != '') ? $lang_common['Ban message 2'].' '.strtolower(format_time($cur_ban['expire'], true)).'. ' : '').(($cur_ban['message'] != '') ? $lang_common['Ban message 3'].'<br /><br /><strong>'.pun_htmlspecialchars($cur_ban['message']).'</strong><br /><br />' : '<br /><br />').$lang_common['Ban message 4'].' <a href="mailto:'.pun_htmlspecialchars($pun_config['o_admin_email']).'">'.pun_htmlspecialchars($pun_config['o_admin_email']).'</a>.', true);
 		}
 	}
 
@@ -1290,6 +1315,9 @@ function redirect($destination_url, $message)
 	// If the delay is 0 seconds, we might as well skip the redirect all together
 	if ($pun_config['o_redirect_delay'] == '0')
 	{
+		$db->end_transaction();
+		$db->close();
+
 		header('Location: '.str_replace('&amp;', '&', $destination_url));
 		exit;
 	}
@@ -1922,9 +1950,12 @@ function url_valid($url)
 //
 // This function takes care of possibly disabled unicode properties in PCRE builds
 //
-function ucp_preg_replace($pattern, $replace, $subject)
+function ucp_preg_replace($pattern, $replace, $subject, $callback = false)
 {
-	$replaced = preg_replace($pattern, $replace, $subject);
+	if($callback) 
+		$replaced = preg_replace_callback($pattern, create_function('$matches', 'return '.$replace.';'), $subject);
+	else
+		$replaced = preg_replace($pattern, $replace, $subject);
 
 	// If preg_replace() returns false, this probably means unicode support is not built-in, so we need to modify the pattern a little
 	if ($replaced === false)
@@ -1941,6 +1972,14 @@ function ucp_preg_replace($pattern, $replace, $subject)
 	}
 
 	return $replaced;
+}
+
+//
+// A wrapper for ucp_preg_replace
+//
+function ucp_preg_replace_callback($pattern, $replace, $subject)
+{
+	return ucp_preg_replace($pattern, $replace, $subject, true);
 }
 
 //
