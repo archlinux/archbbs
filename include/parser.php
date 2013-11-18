@@ -823,14 +823,14 @@ function do_bbcode($text, $is_signature = false)
 	$replace_callback[] = 'handle_url_tag($matches[1], $matches[2])';
 	$replace[] = '<a href="mailto:$1">$1</a>';
 	$replace[] = '<a href="mailto:$1">$2</a>';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?id=.$matches[1]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?id=.$matches[1],$matches[2]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?pid=.$matches[1].#p.$matches[1]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?pid=.$matches[1].#p.$matches[1],$matches[2]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewforum.php?id=.$matches[1]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewforum.php?id=.$matches[1],$matches[2]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/profile.php?id=.$matches[1]\')';
-	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/profile.php?id=.$matches[1],$matches[2]\')';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?id=\'.$matches[1])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?id=\'.$matches[1], $matches[2])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?pid=\'.$matches[1].\'#p\'.$matches[1])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewtopic.php?pid=\'.$matches[1].\'#p\'.$matches[1], $matches[2])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewforum.php?id=\'.$matches[1])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/viewforum.php?id=\'.$matches[1], $matches[2])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/profile.php?id=\'.$matches[1])';
+	$replace_callback[] = 'handle_url_tag(\''.get_base_url(true).'/profile.php?id=\'.$matches[1], $matches[2])';
 
 	// This thing takes a while! :)
 	$text = preg_replace($pattern, $replace, $text);
@@ -849,10 +849,19 @@ function do_bbcode($text, $is_signature = false)
 function do_clickable($text)
 {
 	$text = ' '.$text;
-	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(https?|ftp|news){1}://([\p{L}\p{N}\-]+\.([\p{L}\p{N}\-]+\.)*[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui', 'stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5]."://".$matches[6], $matches[5]."://".$matches[6], true).stripslashes($matches[4].$matches[10].$matches[11].$matches[12])', $text);
-	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www|ftp)\.(([\p{L}\p{N}\-]+\.)+[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui','stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5].".".$matches[6], $matches[5].".".$matches[6], true).stripslashes($matches[4].$matches[10].$matches[11].$matches[12])', $text);
+	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(https?|ftp|news){1}://([\p{L}\p{N}\-]+\.([\p{L}\p{N}\-]+\.)*[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui', 'stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5]."://".$matches[6], $matches[5]."://".$matches[6], true).stripslashes($matches[4].forum_array_key($matches, 10).forum_array_key($matches, 11).forum_array_key($matches, 12))', $text);
+	$text = ucp_preg_replace_callback('%(?<=[\s\]\)])(<)?(\[)?(\()?([\'"]?)(www|ftp)\.(([\p{L}\p{N}\-]+\.)+[\p{L}\p{N}]+(:[0-9]+)?(/(?:[^\s\[]*[^\s.,?!\[;:-])?)?)\4(?(3)(\)))(?(2)(\]))(?(1)(>))(?![^\s]*\[/(?:url|img)\])%ui','stripslashes($matches[1].$matches[2].$matches[3].$matches[4]).handle_url_tag($matches[5].".".$matches[6], $matches[5].".".$matches[6], true).stripslashes($matches[4].forum_array_key($matches, 10).forum_array_key($matches, 11).forum_array_key($matches, 12))', $text);
 
 	return substr($text, 1);
+}
+
+
+//
+// Return an array key, if it exists, otherwise return an empty string
+//
+function forum_array_key($arr, $key)
+{
+	return isset($arr[$key]) ? $arr[$key] : '';
 }
 
 
@@ -861,7 +870,7 @@ function do_clickable($text)
 //
 function do_smilies($text)
 {
-	global $pun_config, $smilies;
+	global $smilies;
 
 	$text = ' '.$text.' ';
 

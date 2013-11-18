@@ -6,7 +6,6 @@
  * License: http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  */
 
-include PUN_ROOT.'include/srand.php';
 
 
 //
@@ -454,6 +453,9 @@ function check_username($username, $exclude_id = null)
 {
 	global $db, $pun_config, $errors, $lang_prof_reg, $lang_register, $lang_common, $pun_bans;
 
+	// Include UTF-8 function
+	require PUN_ROOT.'include/utf8/strcasecmp.php';
+
 	// Convert multiple whitespace characters into one (to prevent people from registering with indistinguishable usernames)
 	$username = preg_replace('%\s+%s', ' ', $username);
 
@@ -462,7 +464,7 @@ function check_username($username, $exclude_id = null)
 		$errors[] = $lang_prof_reg['Username too short'];
 	else if (pun_strlen($username) > 25) // This usually doesn't happen since the form element only accepts 25 characters
 		$errors[] = $lang_prof_reg['Username too long'];
-	else if (!strcasecmp($username, 'Guest') || !strcasecmp($username, $lang_common['Guest']))
+	else if (!strcasecmp($username, 'Guest') || !utf8_strcasecmp($username, $lang_common['Guest']))
 		$errors[] = $lang_prof_reg['Username guest'];
 	else if (preg_match('%[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}%', $username) || preg_match('%((([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))%', $username))
 		$errors[] = $lang_prof_reg['Username IP'];
@@ -476,7 +478,7 @@ function check_username($username, $exclude_id = null)
 		$errors[] = $lang_register['Username censor'];
 
 	// Check that the username (or a too similar username) is not already registered
-	$query = ($exclude_id) ? ' AND id!='.$exclude_id : '';
+	$query = (!is_null($exclude_id)) ? ' AND id!='.$exclude_id : '';
 
 	$result = $db->query('SELECT username FROM '.$db->prefix.'users WHERE (UPPER(username)=UPPER(\''.$db->escape($username).'\') OR UPPER(username)=UPPER(\''.$db->escape(ucp_preg_replace('%[^\p{L}\p{N}]%u', '', $username)).'\')) AND id>1'.$query) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
@@ -834,14 +836,14 @@ function get_title($user)
 		$ban_list = array();
 
 		foreach ($pun_bans as $cur_ban)
-			$ban_list[] = strtolower($cur_ban['username']);
+			$ban_list[] = utf8_strtolower($cur_ban['username']);
 	}
 
 	// If the user has a custom title
 	if ($user['title'] != '')
 		$user_title = pun_htmlspecialchars($user['title']);
 	// If the user is banned
-	else if (in_array(strtolower($user['username']), $ban_list))
+	else if (in_array(utf8_strtolower($user['username']), $ban_list))
 		$user_title = $lang_common['Banned'];
 	// If the user group has a default user title
 	else if ($user['g_user_title'] != '')
@@ -1011,6 +1013,9 @@ function forum_number_format($number, $decimals = 0)
 //
 function random_key($len, $readable = false, $hash = false)
 {
+	if (!function_exists('secure_random_bytes'))
+		include PUN_ROOT.'include/srand.php';
+
 	$key = secure_random_bytes($len);
 
 	if ($hash)
@@ -1018,7 +1023,7 @@ function random_key($len, $readable = false, $hash = false)
 	else if ($readable)
 	{
 		$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		
+
 		$result = '';
 		for ($i = 0; $i < $len; ++$i)
 			$result .= substr($chars, (ord($key[$i]) % strlen($chars)), 1);
