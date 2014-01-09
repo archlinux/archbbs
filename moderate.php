@@ -278,6 +278,8 @@ if (isset($_GET['tid']))
 	// Used to disable the Move and Delete buttons if there are no replies to this topic
 	$button_status = ($cur_topic['num_replies'] == 0) ? ' disabled="disabled"' : '';
 
+	if (isset($_GET['action']) && $_GET['action'] == 'all')
+		$pun_user['disp_posts'] = $cur_topic['num_replies'] + 1;
 
 	// Determine the post offset (based on $_GET['p'])
 	$num_pages = ceil(($cur_topic['num_replies'] + 1) / $pun_user['disp_posts']);
@@ -859,7 +861,7 @@ require PUN_ROOT.'header.php';
 	<h2><span><?php echo pun_htmlspecialchars($cur_forum['forum_name']) ?></span></h2>
 	<div class="box">
 		<div class="inbox">
-			<table cellspacing="0">
+			<table>
 			<thead>
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Topic'] ?></th>

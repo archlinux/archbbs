@@ -1,6 +1,5 @@
-diff -Nura fluxbb-1.5.2.orig/post.php fluxbb-1.5.2/post.php
---- fluxbb-1.5.2.orig/post.php	2013-01-10 17:40:29.000000000 +0100
-+++ fluxbb-1.5.2/post.php	2013-01-13 15:49:46.744773725 +0100
+--- post.php	2014-01-09 16:47:04.109798856 +0100
++++ post.php	2014-01-09 05:42:34.785300955 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -17,7 +16,7 @@ diff -Nura fluxbb-1.5.2.orig/post.php fluxbb-1.5.2/post.php
  	// Flood protection
  	if (!isset($_POST['preview']) && $pun_user['last_post'] != '' && (time() - $pun_user['last_post']) < $pun_user['g_post_flood'])
  		$errors[] = sprintf($lang_post['Flood start'], $pun_user['g_post_flood'], $pun_user['g_post_flood'] - (time() - $pun_user['last_post']));
-@@ -695,6 +697,7 @@
+@@ -700,6 +702,7 @@
  
  ?>
  			</div>
@@ -25,9 +24,8 @@ diff -Nura fluxbb-1.5.2.orig/post.php fluxbb-1.5.2/post.php
  			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
  		</form>
  	</div>
-diff -Nura fluxbb-1.5.2.orig/register.php fluxbb-1.5.2/register.php
---- fluxbb-1.5.2.orig/register.php	2013-01-10 17:40:29.000000000 +0100
-+++ fluxbb-1.5.2/register.php	2013-01-13 15:49:46.744773725 +0100
+--- register.php	2014-01-09 16:47:04.109798856 +0100
++++ register.php	2013-11-18 14:53:39.275533893 +0100
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -44,7 +42,7 @@ diff -Nura fluxbb-1.5.2.orig/register.php fluxbb-1.5.2/register.php
  	// Check that someone from this IP didn't register a user within the last hour (DoS prevention)
  	$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.$db->escape(get_remote_address()).'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
  
-@@ -427,6 +429,7 @@
+@@ -430,6 +432,7 @@
  					</div>
  				</fieldset>
  			</div>
@@ -52,9 +50,8 @@ diff -Nura fluxbb-1.5.2.orig/register.php fluxbb-1.5.2/register.php
  			<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
  		</form>
  	</div>
-diff -Nura fluxbb-1.5.2.orig/viewtopic.php fluxbb-1.5.2/viewtopic.php
---- fluxbb-1.5.2.orig/viewtopic.php	2013-01-10 17:40:29.000000000 +0100
-+++ fluxbb-1.5.2/viewtopic.php	2013-01-13 15:49:46.744773725 +0100
+--- viewtopic.php	2014-01-09 16:47:04.109798856 +0100
++++ viewtopic.php	2013-08-15 18:32:03.895427347 +0200
 @@ -8,6 +8,7 @@
  
  define('PUN_ROOT', dirname(__FILE__).'/');
@@ -63,7 +60,7 @@ diff -Nura fluxbb-1.5.2.orig/viewtopic.php fluxbb-1.5.2/viewtopic.php
  
  
  if ($pun_user['g_read_board'] == '0')
-@@ -442,6 +443,7 @@
+@@ -447,6 +448,7 @@
  					</div>
  				</fieldset>
  			</div>

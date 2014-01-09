@@ -454,7 +454,7 @@ function check_username($username, $exclude_id = null)
 	global $db, $pun_config, $errors, $lang_prof_reg, $lang_register, $lang_common, $pun_bans;
 
 	// Include UTF-8 function
-	require PUN_ROOT.'include/utf8/strcasecmp.php';
+	require_once PUN_ROOT.'include/utf8/strcasecmp.php';
 
 	// Convert multiple whitespace characters into one (to prevent people from registering with indistinguishable usernames)
 	$username = preg_replace('%\s+%s', ' ', $username);
@@ -592,6 +592,9 @@ function generate_avatar_markup($user_id)
 function generate_page_title($page_title, $p = null)
 {
 	global $pun_config, $lang_common;
+
+	if (!is_array($page_title))
+		$page_title = array($page_title);
 
 	$page_title = array_reverse($page_title);
 
@@ -1038,9 +1041,12 @@ function random_key($len, $readable = false, $hash = false)
 //
 // Make sure that HTTP_REFERER matches base_url/script
 //
-function confirm_referrer($script, $error_msg = false)
+function confirm_referrer($scripts, $error_msg = false)
 {
 	global $pun_config, $lang_common;
+
+	if (!is_array($scripts))
+		$scripts = array($scripts);
 
 	// There is no referrer
 	if (empty($_SERVER['HTTP_REFERER']))
@@ -1051,13 +1057,20 @@ function confirm_referrer($script, $error_msg = false)
 	if (strpos($referrer['host'], 'www.') === 0)
 		$referrer['host'] = substr($referrer['host'], 4);
 
-	$valid = parse_url(strtolower(get_base_url().'/'.$script));
-	// Remove www subdomain if it exists
-	if (strpos($valid['host'], 'www.') === 0)
-		$valid['host'] = substr($valid['host'], 4);
+	$valid_paths = array();
+	foreach ($scripts as $script)
+	{
+		$valid = parse_url(strtolower(get_base_url().'/'.$script));
+		// Remove www subdomain if it exists
+		if (strpos($valid['host'], 'www.') === 0)
+			$valid['host'] = substr($valid['host'], 4);
+
+		$valid_host = $valid['host'];
+		$valid_paths[] = $valid['path'];
+	}
 
 	// Check the host and path match. Ignore the scheme, port, etc.
-	if ($referrer['host'] != $valid['host'] || $referrer['path'] != $valid['path'])
+	if ($referrer['host'] != $valid_host || !in_array($referrer['path'], $valid_paths))
 		message($error_msg ? $error_msg : $lang_common['Bad referrer']);
 }
 
@@ -2072,7 +2085,7 @@ function display_saved_queries()
 	<h2><span><?php echo $lang_common['Debug table'] ?></span></h2>
 	<div class="box">
 		<div class="inbox">
-			<table cellspacing="0">
+			<table>
 			<thead>
 				<tr>
 					<th class="tcl" scope="col"><?php echo $lang_common['Query times'] ?></th>
