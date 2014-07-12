@@ -6,3 +6,7 @@
 /img/avatars/*.jpg
 /img/avatars/*.gif
 /config.php
+/.kateproject.d/
+/nbproject/
+/.idea/
+*~
