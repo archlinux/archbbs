@@ -1,8 +1,9 @@
 * { font-family: sans-serif !important; }
+.pun { max-width: none; margin: 0; }
 #archnavbar.anb-forum ul li.anb-selected a { color: #fff !important; }
 .pun pre, .pun code { font-family: monospace !important; }
 html, body, .pun { background: #f6f9fc; color: #222; }
-.pun .punwrap {	border-color: #bcd; }
+.pun .punwrap {	border-color: #bcd; border-radius: 0; }
 
 .pun a, .pun a:link, .pun a:visited { text-decoration:none; color:#07b; outline: none; }
 .pun a:focus, #brdmain a:focus { color: #e90; }

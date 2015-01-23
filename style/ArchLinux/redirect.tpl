@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <pun_head>
-<link rel="stylesheet" media="screen" href="style/ArchLinux/arch.css?v=2" />
+<link rel="stylesheet" media="screen" href="style/ArchLinux/arch.css?v=3" />
 <link rel="stylesheet" media="screen" href="style/ArchLinux/archnavbar.css?v=2" />
 <link rel="shortcut icon" href="style/ArchLinux/favicon.ico" />
 </head>
@@ -12,7 +12,7 @@
 <pun_include "archnavbar.php">
 
 <div id="punredirect" class="pun">
-<div class="top-box"><div><!-- Top Corners --></div></div>
+<div class="top-box"></div>
 <div class="punwrap">
 
 <div id="brdmain">
@@ -22,7 +22,7 @@
 <pun_footer>
 
 </div>
-<div class="end-box"><div><!-- Bottom Corners --></div></div>
+<div class="end-box"></div>
 </div>
 
 </body>
