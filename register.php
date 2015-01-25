@@ -8,7 +8,6 @@
 
 define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
-require PUN_ROOT.'include/funnyquestion.php';
 
 
 // If we are logged in, we shouldn't be here
@@ -67,7 +66,7 @@ $errors = array();
 if (isset($_POST['form_sent']))
 {
 	flux_hook('register_before_validation');
-	check_funnyquestion() || $errors[] = $lang_funnyquestion['wrong-answer'];
+
 	// Check that someone from this IP didn't register a user within the last hour (DoS prevention)
 	$result = $db->query('SELECT 1 FROM '.$db->prefix.'users WHERE registration_ip=\''.$db->escape(get_remote_address()).'\' AND registered>'.(time() - 3600)) or error('Unable to fetch user info', __FILE__, __LINE__, $db->error());
 
@@ -440,7 +439,6 @@ if (!empty($errors))
 				</fieldset>
 			</div>
 <?php flux_hook('register_before_submit'); ?>
-			<?php echo get_funnyquestion(); ?>
 			<p class="buttons"><input type="submit" name="register" value="<?php echo $lang_register['Register'] ?>" /></p>
 		</form>
 	</div>

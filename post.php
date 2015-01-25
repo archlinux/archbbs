@@ -8,7 +8,6 @@
 
 define('PUN_ROOT', dirname(__FILE__).'/');
 require PUN_ROOT.'include/common.php';
-require PUN_ROOT.'include/funnyquestion.php';
 
 
 if ($pun_user['g_read_board'] == '0')
@@ -60,7 +59,6 @@ $errors = array();
 // Did someone just hit "Submit" or "Preview"?
 if (isset($_POST['form_sent']))
 {
-	check_funnyquestion() || $errors[] = $lang_funnyquestion['wrong-answer'];
 	flux_hook('post_before_validation');
 
 	// Flood protection
@@ -709,7 +707,6 @@ if (!empty($checkboxes))
 ?>
 			</div>
 <?php flux_hook('post_before_submit') ?>
-			<?php echo get_funnyquestion(); ?>
 			<p class="buttons"><input type="submit" name="submit" value="<?php echo $lang_common['Submit'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="s" /> <input type="submit" name="preview" value="<?php echo $lang_post['Preview'] ?>" tabindex="<?php echo $cur_index++ ?>" accesskey="p" /> <a href="javascript:history.go(-1)"><?php echo $lang_common['Go back'] ?></a></p>
 		</form>
 	</div>

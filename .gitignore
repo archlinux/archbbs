@@ -1,10 +1,10 @@
-/cache/cache_*.php
-/cache/db_update.lock
-/modules/
+/cache/*
+!/cache/index.html
+!/cache/.htaccess
 /include/user/*
-/img/avatars/*.png
-/img/avatars/*.jpg
-/img/avatars/*.gif
+!/include/user/index.html
+/img/avatars/*
+!/img/avatars/index.html
 /config.php
 /.kateproject.d/
 /nbproject/
