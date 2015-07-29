@@ -1,5 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /style/
-Disallow: /img/
 Disallow: /search.php
