@@ -449,6 +449,8 @@ else if ($action == 'delete_avatar')
 
 	confirm_referrer('profile.php');
 
+	check_csrf($_GET['csrf_token']);
+
 	delete_avatar($id);
 
 	redirect('profile.php?section=personality&amp;id='.$id, $lang_profile['Avatar deleted redirect']);
@@ -753,6 +755,8 @@ else if (isset($_POST['form_sent']))
 				if (!in_array($form['language'], $languages))
 					message($lang_common['Bad request'], false, '404 Not Found');
 			}
+			else
+				$form['language'] = $pun_config['o_default_lang'];
 
 			if ($pun_user['is_admmod'])
 			{
@@ -1531,7 +1535,7 @@ else
 
 		$user_avatar = generate_avatar_markup($id);
 		if ($user_avatar)
-			$avatar_field .= ' <span><a href="profile.php?action=delete_avatar&amp;id='.$id.'">'.$lang_profile['Delete avatar'].'</a></span>';
+			$avatar_field .= ' <span><a href="profile.php?action=delete_avatar&amp;id='.$id.'&amp;csrf_token='.pun_csrf_token().'">'.$lang_profile['Delete avatar'].'</a></span>';
 		else
 			$avatar_field = '<span><a href="profile.php?action=upload_avatar&amp;id='.$id.'">'.$lang_profile['Upload avatar'].'</a></span>';
 
