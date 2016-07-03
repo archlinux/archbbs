@@ -858,12 +858,12 @@ function get_title($user)
 			$ban_list[] = utf8_strtolower($cur_ban['username']);
 	}
 
-	// If the user has a custom title
-	if ($user['title'] != '')
-		$user_title = pun_htmlspecialchars($user['title']);
 	// If the user is banned
-	else if (in_array(utf8_strtolower($user['username']), $ban_list))
+	if (in_array(utf8_strtolower($user['username']), $ban_list))
 		$user_title = $lang_common['Banned'];
+	// If the user has a custom title
+	else if ($user['title'] != '')
+		$user_title = pun_htmlspecialchars($user['title']);
 	// If the user group has a default user title
 	else if ($user['g_user_title'] != '')
 		$user_title = pun_htmlspecialchars($user['g_user_title']);
@@ -1153,7 +1153,7 @@ function pun_hash($str)
 function pun_hash_equals($a, $b)
 {
 	if (function_exists('hash_equals'))
-		return hash_equals((string)$a, (string)$b);
+		return hash_equals((string) $a, (string) $b);
 
 	$a_length = strlen($a);
 
@@ -1632,6 +1632,8 @@ H2 {MARGIN: 0; COLOR: #FFFFFF; BACKGROUND-COLOR: #B84623; FONT-SIZE: 1.1em; PADD
 
 	if (defined('PUN_DEBUG') && !is_null($file) && !is_null($line))
 	{
+		$file = str_replace(realpath(PUN_ROOT), '', $file);
+
 		echo "\t\t".'<strong>File:</strong> '.$file.'<br />'."\n\t\t".'<strong>Line:</strong> '.$line.'<br /><br />'."\n\t\t".'<strong>FluxBB reported</strong>: '.$message."\n";
 
 		if ($db_error)
@@ -1850,33 +1852,6 @@ function generate_stopwords_cache_id()
 	}
 
 	return sha1(implode('|', $hash));
-}
-
-
-//
-// Fetch a list of available admin plugins
-//
-function forum_list_plugins($is_admin)
-{
-	$plugins = array();
-
-	$d = dir(PUN_ROOT.'plugins');
-	while (($entry = $d->read()) !== false)
-	{
-		if ($entry{0} == '.')
-			continue;
-
-		$prefix = substr($entry, 0, strpos($entry, '_'));
-		$suffix = substr($entry, strlen($entry) - 4);
-
-		if ($suffix == '.php' && ((!$is_admin && $prefix == 'AMP') || ($is_admin && ($prefix == 'AP' || $prefix == 'AMP'))))
-			$plugins[$entry] = substr($entry, strpos($entry, '_') + 1, -4);
-	}
-	$d->close();
-
-	natcasesort($plugins);
-
-	return $plugins;
 }
 
 

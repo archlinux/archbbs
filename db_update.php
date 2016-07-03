@@ -7,7 +7,7 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.5.9');
+define('UPDATE_TO', '1.5.10');
 
 define('UPDATE_TO_DB_REVISION', 21);
 define('UPDATE_TO_SI_REVISION', 2);
@@ -675,7 +675,7 @@ if (isset($_POST['req_db_pass']))
 else if (isset($_GET['uid']))
 {
 	$uid = pun_trim($_GET['uid']);
-	if (!$lock || $lock != $uid) // The lock doesn't exist or doesn't match the given UID
+	if (!$lock || $lock !== $uid) // The lock doesn't exist or doesn't match the given UID
 		$lock_error = true;
 }
 else

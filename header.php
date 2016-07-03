@@ -19,9 +19,15 @@ header('Pragma: no-cache'); // For HTTP/1.0 compatibility
 // Send the Content-type header in case the web server is setup to send something else
 header('Content-type: text/html; charset=utf-8');
 
-// Prevent site from being embedded in a frame
-$frame_options = defined('FORUM_FRAME_OPTIONS') ? FORUM_FRAME_OPTIONS : 'deny';
-header('X-Frame-Options: '.$frame_options);
+// Prevent site from being embedded in a frame unless FORUM_FRAME_OPTIONS is set
+// to a valid X-Frame-Options header value or false
+if (defined('FORUM_FRAME_OPTIONS'))
+{
+	if (preg_match('/^(?:allow-from|deny|sameorigin)/i', FORUM_FRAME_OPTIONS))
+		header('X-Frame-Options: '.FORUM_FRAME_OPTIONS);
+}
+else
+	header('X-Frame-Options: deny');
 
 // Load the template
 if (defined('PUN_ADMIN_CONSOLE'))
@@ -167,7 +173,7 @@ if (isset($focus_element))
 
 
 // START SUBST - <pun_page>
-$tpl_main = str_replace('<pun_page>', htmlspecialchars(basename($_SERVER['PHP_SELF'], '.php')), $tpl_main);
+$tpl_main = str_replace('<pun_page>', htmlspecialchars(basename($_SERVER['SCRIPT_NAME'], '.php')), $tpl_main);
 // END SUBST - <pun_page>
 
 
