@@ -4,9 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <pun_head>
-<link rel="stylesheet" media="screen" href="style/ArchLinux/arch.css?v=3" />
-<link rel="stylesheet" media="screen" href="style/ArchLinux/archnavbar.css?v=2" />
-<link rel="stylesheet" media="screen" href="style/ArchLinux/responsive.css?v=1" />
+<pun_include "css.php">
 <link rel="shortcut icon" href="style/ArchLinux/favicon.ico" />
 </head>
 
