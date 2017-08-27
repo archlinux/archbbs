@@ -4,8 +4,14 @@
 }
 
 @media (max-width: 575px) {
+    #archnavbar {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
     #archnavbarlogo {
-        display: none;
+        width: 40px !important;
+        margin-right: 5px !important;
     }
 
     #archnavbar ul {
@@ -64,27 +70,6 @@
     .pun .quotebox {
         margin: 0.75em 0.5em;
     }
-
-    .pun .required strong {
-        white-space: normal;
-    }
-
-    .pun .crumbs li {
-        white-space: normal;
-    }
-
-    .pun .postlinksb .crumbs {
-        margin-right: 0;
-    }
-
-    .pun .blockpost .postfoot {
-        border-left-style: none;
-    }
-
-    #brdmenu ul {
-        display: flex;
-        justify-content: space-between;
-    }
 }
 
 @media (max-width: 767px) {
@@ -106,5 +91,26 @@
 
     #punindex #brdmain .blocktable h2, #punsearch #vf h2 {
         padding-top: 4px;
+    }
+
+    .pun .required strong {
+        white-space: normal;
+    }
+
+    .pun .crumbs li {
+        white-space: normal;
+    }
+
+    .pun .postlinksb .crumbs {
+        margin-right: 0;
+    }
+
+    .pun .blockpost .postfoot {
+        border-left-style: none;
+    }
+
+    #brdmenu ul {
+        display: flex;
+        justify-content: space-between;
     }
 }
