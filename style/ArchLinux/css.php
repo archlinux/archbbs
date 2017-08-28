@@ -2,7 +2,7 @@
 
 $cssSums = '';
 
-foreach (array('arch', 'archnavbar', 'responsive') as $cssFile) {
+foreach (array('arch', 'archnavbar', 'arch_responsive', 'archnavbar_responsive') as $cssFile) {
     $cssSums .= sha1_file(__DIR__ . '/' . $cssFile . '.css');
 }
 ?>
