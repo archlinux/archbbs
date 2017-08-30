@@ -27,14 +27,12 @@ html > body #archnavbarlogo { background: url('archlogo.svg') no-repeat !importa
 #archnavbar ul#archnavbarlist li a { color: #999; font-weight: bold !important; text-decoration: none !important; }
 #archnavbar ul li a:hover { color: white !important; text-decoration: underline !important; }
 
-@media (max-width: 600px) {
-    #anb-home,
+@media (max-width: 680px) {
+    #anb-forum,
     #anb-forums {
         display: none;
     }
-}
 
-@media (max-width: 680px) {
     html > body #archnavbarlogo {
         width: 40px !important;
         margin-right: 5px !important;
@@ -45,7 +43,8 @@ html > body #archnavbarlogo { background: url('archlogo.svg') no-repeat !importa
     #archnavbar ul {
         display: flex !important;
         justify-content: space-between;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow: hidden;
         float: none !important;
     }
 
@@ -56,6 +55,11 @@ html > body #archnavbarlogo { background: url('archlogo.svg') no-repeat !importa
 }
 
 @media (max-width: 830px) {
+    #anb-home,
+    #anb-start {
+        display: none;
+    }
+
     html > body #archnavbarlogo {
         padding-right: 15px !important;
     }

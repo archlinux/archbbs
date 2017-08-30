@@ -143,16 +143,6 @@ html, body, .pun { background: #f6f9fc; color: #222; }
         border-left-style: none;
     }
 
-    #brdmenu ul {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-    }
-
-    #brdmenu a {
-        display: inline-block !important;
-    }
-
     #brdwelcome .conl {
         display: none;
     }
