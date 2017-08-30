@@ -113,10 +113,3 @@
         position: inherit;
     }
 }
-
-@media (max-width: 768px), (min-width: 1921px) {
-    .pun {
-        font-size: 1rem;
-        line-height: 1.25rem;
-    }
-}
