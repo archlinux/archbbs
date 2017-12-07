@@ -67,7 +67,8 @@ $flux_addons = new flux_addon_manager();
 $pun_start = get_microtime();
 
 // Make sure PHP reports all errors except E_NOTICE. FluxBB supports E_ALL, but a lot of scripts it may interact with, do not
-error_reporting(E_ALL ^ E_NOTICE);
+// We set this in php.ini
+//error_reporting(E_ALL ^ E_NOTICE);
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');
