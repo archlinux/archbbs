@@ -978,22 +978,25 @@ function message($message, $no_back_link = false, $http_status = null)
 //
 // Format a time string according to $time_format and time zones
 //
-function format_time($timestamp, $date_only = false, $date_format = null, $time_format = null, $time_only = false, $no_text = false)
+function format_time($timestamp, $date_only = false, $date_format = null, $time_format = null, $time_only = false, $no_text = false, $user = null)
 {
 	global $lang_common, $pun_user, $forum_date_formats, $forum_time_formats;
 
 	if ($timestamp == '')
 		return $lang_common['Never'];
 
-	$diff = ($pun_user['timezone'] + $pun_user['dst']) * 3600;
+	if (is_null($user))
+		$user = $pun_user;
+
+	$diff = ($user['timezone'] + $user['dst']) * 3600;
 	$timestamp += $diff;
 	$now = time();
 
 	if(is_null($date_format))
-		$date_format = $forum_date_formats[$pun_user['date_format']];
+		$date_format = $forum_date_formats[$user['date_format']];
 
 	if(is_null($time_format))
-		$time_format = $forum_time_formats[$pun_user['time_format']];
+		$time_format = $forum_time_formats[$user['time_format']];
 
 	$date = gmdate($date_format, $timestamp);
 	$today = gmdate($date_format, $now+$diff);
@@ -1322,6 +1325,8 @@ function maintenance_message()
 {
 	global $db, $pun_config, $lang_common, $pun_user;
 
+	header('HTTP/1.1 503 Service Unavailable');
+
 	// Send no-cache headers
 	header('Expires: Thu, 21 Jul 1977 07:30:00 GMT'); // When yours truly first set eyes on this world! :)
 	header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
@@ -1598,6 +1603,8 @@ function error($message, $file = null, $line = null, $db_error = false)
 	if ($pun_config['o_gzip'] && extension_loaded('zlib'))
 		ob_start('ob_gzhandler');
 
+	header('HTTP/1.1 500 Internal Server Error');
+
 	// Send no-cache headers
 	header('Expires: Thu, 21 Jul 1977 07:30:00 GMT'); // When yours truly first set eyes on this world! :)
 	header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
@@ -1645,7 +1652,7 @@ H2 {MARGIN: 0; COLOR: #FFFFFF; BACKGROUND-COLOR: #B84623; FONT-SIZE: 1.1em; PADD
 		}
 	}
 	else
-		echo "\t\t".'Error: <strong>'.$message.'.</strong>'."\n";
+		echo "\t\t".'Error: <strong>'.pun_htmlspecialchars($message).'.</strong>'."\n";
 
 ?>
 	</div>

@@ -7,7 +7,7 @@
  */
 
 // The FluxBB version this script updates to
-define('UPDATE_TO', '1.5.10');
+define('UPDATE_TO', '1.5.11');
 
 define('UPDATE_TO_DB_REVISION', 21);
 define('UPDATE_TO_SI_REVISION', 2);
@@ -111,6 +111,8 @@ define('PUN_MEMBER', 4);
 
 // Load DB abstraction layer and try to connect
 require PUN_ROOT.'include/dblayer/common_db.php';
+
+$db->start_transaction();
 
 // Check what the default character set is - since 1.2 didn't specify any we will use whatever the default was (usually latin1)
 $old_connection_charset = defined('FORUM_DEFAULT_CHARSET') ? FORUM_DEFAULT_CHARSET : $db->get_names();

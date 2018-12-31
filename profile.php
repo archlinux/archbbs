@@ -90,7 +90,7 @@ if ($action == 'change_pass')
 
 		if ($new_password1 != $new_password2)
 			message($lang_prof_reg['Pass not match']);
-		if (pun_strlen($new_password1) < 6)
+		if (pun_strlen($new_password1) < 9)
 			message($lang_prof_reg['Pass too short']);
 
 		$result = $db->query('SELECT * FROM '.$db->prefix.'users WHERE id='.$id) or error('Unable to fetch password', __FILE__, __LINE__, $db->error());
@@ -575,6 +575,8 @@ else if ($action == 'promote')
 		message($lang_common['No permission'], false, '403 Forbidden');
 
 	confirm_referrer('viewtopic.php');
+
+	check_csrf($_GET['csrf_token']);
 
 	$pid = isset($_GET['pid']) ? intval($_GET['pid']) : 0;
 
@@ -1388,7 +1390,7 @@ else
 									echo "\t\t\t\t\t\t\t\t".'<option value="'.$key.'"';
 									if ($user['time_format'] == $key)
 										echo ' selected="selected"';
-									echo '>'. format_time(time(), false, null, $time_format, true, true);
+									echo '>'. format_time(time(), false, null, $time_format, true, true, $user);
 									if ($key == 0)
 										echo ' ('.$lang_prof_reg['Default'].')';
 									echo "</option>\n";
@@ -1405,7 +1407,7 @@ else
 									echo "\t\t\t\t\t\t\t\t".'<option value="'.$key.'"';
 									if ($user['date_format'] == $key)
 										echo ' selected="selected"';
-									echo '>'. format_time(time(), true, $date_format, null, false, true);
+									echo '>'. format_time(time(), true, $date_format, null, false, true, $user);
 									if ($key == 0)
 										echo ' ('.$lang_prof_reg['Default'].')';
 									echo "</option>\n";
