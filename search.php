@@ -162,7 +162,7 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			if ($keywords)
 			{
 				// split the keywords into words
-				$keywords_array = split_words($keywords, false);
+				$keywords_array = split_words($keywords, true);
 
 				if (empty($keywords_array))
 					message($lang_search['No hits']);
