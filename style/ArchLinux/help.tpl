@@ -19,6 +19,8 @@
 <pun_main>
 </div>
 
+<pun_include "archfooter.php">
+
 </div>
 <div class="end-box"></div>
 </div>

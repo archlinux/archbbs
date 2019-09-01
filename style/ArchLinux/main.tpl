@@ -30,6 +30,8 @@
 
 <pun_footer>
 
+<pun_include "archfooter.php">
+
 </div>
 <div class="end-box"></div>
 </div>

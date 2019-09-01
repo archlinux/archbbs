@@ -151,3 +151,12 @@ html, body, .pun { background: #f6f9fc; color: #222; }
         position: inherit;
     }
 }
+
+#archfooter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#archfooter li {
+    margin-left: 10px;
+}
