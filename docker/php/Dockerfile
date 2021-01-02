@@ -1,4 +1,6 @@
-FROM archlinux/base
+FROM php:7-fpm-alpine
 
-RUN pacman -Syu --noconfirm php php-apcu php-apcu-bc
-ADD etc/ /etc
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
+RUN install-php-extensions opcache mysqli apcu
+
+RUN echo "error_reporting=E_ALL & ~E_DEPRECATED" > "$PHP_INI_DIR/conf.d/error_reporting.ini"
