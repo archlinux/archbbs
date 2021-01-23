@@ -37,8 +37,7 @@ class DBLayer
 		if (strpos($db_host, ':') !== false)
 			list($db_host, $db_port) = explode(':', $db_host);
 
-		// Persistent connection in MySQLi are only available in PHP 5.3 and later releases
-		$p_connect = $p_connect && version_compare(PHP_VERSION, '5.3.0', '>=') ? 'p:' : '';
+		$p_connect = $p_connect ? 'p:' : '';
 
 		if (isset($db_port))
 			$this->link_id = @mysqli_connect($p_connect.$db_host, $db_username, $db_password, $db_name, $db_port);
@@ -51,14 +50,6 @@ class DBLayer
 		// Setup the client-server character set (UTF-8)
 		if (!defined('FORUM_NO_SET_NAMES'))
 			$this->set_names('utf8');
-
-		return $this->link_id;
-	}
-
-
-	function DBLayer($db_host, $db_username, $db_password, $db_name, $db_prefix, $p_connect)
-	{
-		$this->__construct($db_host, $db_username, $db_password, $db_name, $db_prefix, $p_connect);
 	}
 
 
@@ -83,14 +74,14 @@ class DBLayer
 	function query($sql, $unbuffered = false)
 	{
 		if (defined('PUN_SHOW_QUERIES'))
-			$q_start = get_microtime();
+			$q_start = microtime(true);
 
 		$this->query_result = @mysqli_query($this->link_id, $sql);
 
 		if ($this->query_result)
 		{
 			if (defined('PUN_SHOW_QUERIES'))
-				$this->saved_queries[] = array($sql, sprintf('%.5F', get_microtime() - $q_start));
+				$this->saved_queries[] = array($sql, sprintf('%.5F', microtime(true) - $q_start));
 
 			++$this->num_queries;
 
@@ -123,7 +114,7 @@ class DBLayer
 				return false;
 
 			$cur_row = @mysqli_fetch_row($query_id);
-			if ($cur_row === false)
+			if ($cur_row === null)
 				return false;
 
 			return $cur_row[$col];

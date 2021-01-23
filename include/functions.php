@@ -9,15 +9,6 @@
 
 
 //
-// Return current timestamp (with microseconds) as a float
-//
-function get_microtime()
-{
-	list($usec, $sec) = explode(' ', microtime());
-	return ((float)$usec + (float)$sec);
-}
-
-//
 // Cookie stuff!
 //
 function check_cookie(&$pun_user)
@@ -314,37 +305,11 @@ function set_default_user()
 
 
 //
-// SHA1 HMAC with PHP 4 fallback
+// SHA1 HMAC
 //
 function forum_hmac($data, $key, $raw_output = false)
 {
-	if (function_exists('hash_hmac'))
-		return hash_hmac('sha1', $data, $key, $raw_output);
-
-	// If key size more than blocksize then we hash it once
-	if (strlen($key) > 64)
-		$key = pack('H*', sha1($key)); // we have to use raw output here to match the standard
-
-	// Ensure we're padded to exactly one block boundary
-	$key = str_pad($key, 64, chr(0x00));
-
-	$hmac_opad = str_repeat(chr(0x5C), 64);
-	$hmac_ipad = str_repeat(chr(0x36), 64);
-
-	// Do inner and outer padding
-	for ($i = 0;$i < 64;$i++) {
-		$hmac_opad[$i] = $hmac_opad[$i] ^ $key[$i];
-		$hmac_ipad[$i] = $hmac_ipad[$i] ^ $key[$i];
-	}
-
-	// Finally, calculate the HMAC
-	$hash = sha1($hmac_opad.pack('H*', sha1($hmac_ipad.$data)));
-
-	// If we want raw output then we need to pack the final result
-	if ($raw_output)
-		$hash = pack('H*', $hash);
-
-	return $hash;
+	return hash_hmac('sha1', $data, $key, $raw_output);
 }
 
 
@@ -373,10 +338,7 @@ function forum_setcookie($name, $value, $expire)
 	// Enable sending of a P3P header
 	header('P3P: CP="CUR ADM"');
 
-	if (version_compare(PHP_VERSION, '5.2.0', '>='))
-		setcookie($name, $value, $expire, $cookie_path, $cookie_domain, $cookie_secure, true);
-	else
-		setcookie($name, $value, $expire, $cookie_path.'; HttpOnly', $cookie_domain, $cookie_secure);
+    setcookie($name, $value, $expire, $cookie_path, $cookie_domain, $cookie_secure, true);
 }
 
 
@@ -944,7 +906,7 @@ function paginate($num_pages, $cur_page, $link)
 //
 function message($message, $no_back_link = false, $http_status = null)
 {
-	global $db, $lang_common, $pun_config, $pun_start, $tpl_main, $pun_user;
+	global $db, $lang_common, $pun_config, $tpl_main, $pun_user;
 
 	// Did we receive a custom header?
 	if(!is_null($http_status)) {
@@ -1155,21 +1117,7 @@ function pun_hash($str)
 //
 function pun_hash_equals($a, $b)
 {
-	if (function_exists('hash_equals'))
-		return hash_equals((string) $a, (string) $b);
-
-	$a_length = strlen($a);
-
-	if ($a_length !== strlen($b))
-		return false;
-
-	$result = 0;
-
-	// Do not attempt to "optimize" this.
-	for ($i = 0; $i < $a_length; $i++)
-		$result |= ord($a[$i]) ^ ord($b[$i]);
-
-	return $result === 0;
+	return hash_equals((string) $a, (string) $b);
 }
 
 
@@ -1243,18 +1191,7 @@ function pun_htmlspecialchars($str)
 //
 function pun_htmlspecialchars_decode($str)
 {
-	if (function_exists('htmlspecialchars_decode'))
-		return htmlspecialchars_decode($str, ENT_QUOTES);
-
-	static $translations;
-	if (!isset($translations))
-	{
-		$translations = get_html_translation_table(HTML_SPECIALCHARS, ENT_QUOTES);
-		$translations['&#039;'] = '\''; // get_html_translation_table doesn't include &#039; which is what htmlspecialchars translates ' to, but apparently that is okay?! http://bugs.php.net/bug.php?id=25927
-		$translations = array_flip($translations);
-	}
-
-	return strtr($str, $translations);
+	return htmlspecialchars_decode($str, ENT_QUOTES);
 }
 
 
@@ -1671,35 +1608,6 @@ H2 {MARGIN: 0; COLOR: #FFFFFF; BACKGROUND-COLOR: #B84623; FONT-SIZE: 1.1em; PADD
 
 
 //
-// Unset any variables instantiated as a result of register_globals being enabled
-//
-function forum_unregister_globals()
-{
-	$register_globals = ini_get('register_globals');
-	if ($register_globals === '' || $register_globals === '0' || strtolower($register_globals) === 'off')
-		return;
-
-	// Prevent script.php?GLOBALS[foo]=bar
-	if (isset($_REQUEST['GLOBALS']) || isset($_FILES['GLOBALS']))
-		exit('I\'ll have a steak sandwich and... a steak sandwich.');
-
-	// Variables that shouldn't be unset
-	$no_unset = array('GLOBALS', '_GET', '_POST', '_COOKIE', '_REQUEST', '_SERVER', '_ENV', '_FILES');
-
-	// Remove elements in $GLOBALS that are present in any of the superglobals
-	$input = array_merge($_GET, $_POST, $_COOKIE, $_SERVER, $_ENV, $_FILES, isset($_SESSION) && is_array($_SESSION) ? $_SESSION : array());
-	foreach ($input as $k => $v)
-	{
-		if (!in_array($k, $no_unset) && isset($GLOBALS[$k]))
-		{
-			unset($GLOBALS[$k]);
-			unset($GLOBALS[$k]); // Double unset to circumvent the zend_hash_del_key_or_index hole in PHP <4.4.3 and <5.1.4
-		}
-	}
-}
-
-
-//
 // Removes any "bad" characters (characters which mess with the display of a page, are invisible, etc) from user input
 //
 function forum_remove_bad_characters()
@@ -1803,7 +1711,7 @@ function forum_list_styles()
 	$d = dir(PUN_ROOT.'style');
 	while (($entry = $d->read()) !== false)
 	{
-		if ($entry{0} == '.')
+		if ($entry[0] == '.')
 			continue;
 
 		if (substr($entry, -4) == '.css')
@@ -1827,7 +1735,7 @@ function forum_list_langs()
 	$d = dir(PUN_ROOT.'lang');
 	while (($entry = $d->read()) !== false)
 	{
-		if ($entry{0} == '.')
+		if ($entry[0] == '.')
 			continue;
 
 		if (is_dir(PUN_ROOT.'lang/'.$entry) && file_exists(PUN_ROOT.'lang/'.$entry.'/common.php'))
@@ -2031,7 +1939,7 @@ function url_valid($url)
 		return FALSE;	// Unrecognised URI scheme. Default to FALSE.
 	}
 	// Validate host name conforms to DNS "dot-separated-parts".
-	if ($m{'regname'}) // If host regname specified, check for DNS conformance.
+	if ($m['regname']) // If host regname specified, check for DNS conformance.
 	{
 		if (!preg_match('/# HTTP DNS host name.
 			^					   # Anchor to beginning of string.
@@ -2062,8 +1970,8 @@ function url_valid($url)
 //
 function ucp_preg_replace($pattern, $replace, $subject, $callback = false)
 {
-	if($callback)
-		$replaced = preg_replace_callback($pattern, create_function('$matches', 'return '.$replace.';'), $subject);
+	if ($callback)
+		$replaced = preg_replace_callback($pattern, $replace, $subject);
 	else
 		$replaced = preg_replace($pattern, $replace, $subject);
 

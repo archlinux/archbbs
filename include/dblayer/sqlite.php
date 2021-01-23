@@ -59,14 +59,6 @@ class DBLayer
 
 		if (!$this->link_id)
 			error('Unable to open database \''.$db_name.'\'. SQLite reported: '.$sqlite_error, __FILE__, __LINE__);
-		else
-			return $this->link_id;
-	}
-	
-	
-	function DBLayer($db_host, $db_username, $db_password, $db_name, $db_prefix, $p_connect)
-	{
-		$this->__construct($db_host, $db_username, $db_password, $db_name, $db_prefix, $p_connect);
 	}
 
 
@@ -95,7 +87,7 @@ class DBLayer
 	function query($sql, $unbuffered = false)
 	{
 		if (defined('PUN_SHOW_QUERIES'))
-			$q_start = get_microtime();
+			$q_start = microtime(true);
 
 		if ($unbuffered)
 			$this->query_result = @sqlite_unbuffered_query($this->link_id, $sql);
@@ -105,7 +97,7 @@ class DBLayer
 		if ($this->query_result)
 		{
 			if (defined('PUN_SHOW_QUERIES'))
-				$this->saved_queries[] = array($sql, sprintf('%.5F', get_microtime() - $q_start));
+				$this->saved_queries[] = array($sql, sprintf('%.5F', microtime(true) - $q_start));
 
 			++$this->num_queries;
 

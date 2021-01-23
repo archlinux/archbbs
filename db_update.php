@@ -13,7 +13,7 @@ define('UPDATE_TO_DB_REVISION', 21);
 define('UPDATE_TO_SI_REVISION', 2);
 define('UPDATE_TO_PARSER_REVISION', 2);
 
-define('MIN_PHP_VERSION', '4.4.0');
+define('MIN_PHP_VERSION', '5.6.4');
 define('MIN_MYSQL_VERSION', '4.1.2');
 define('MIN_PGSQL_VERSION', '7.0.0');
 define('PUN_SEARCH_MIN_WORD', 3);
@@ -64,32 +64,11 @@ require PUN_ROOT.'include/utf8/utf8.php';
 // Strip out "bad" UTF-8 characters
 forum_remove_bad_characters();
 
-// Reverse the effect of register_globals
-forum_unregister_globals();
-
 // Turn on full PHP error reporting
 error_reporting(E_ALL);
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');
-
-// Turn off magic_quotes_runtime
-if (get_magic_quotes_runtime())
-	set_magic_quotes_runtime(0);
-
-// Strip slashes from GET/POST/COOKIE (if magic_quotes_gpc is enabled)
-if (get_magic_quotes_gpc())
-{
-	function stripslashes_array($array)
-	{
-		return is_array($array) ? array_map('stripslashes_array', $array) : stripslashes($array);
-	}
-
-	$_GET = stripslashes_array($_GET);
-	$_POST = stripslashes_array($_POST);
-	$_COOKIE = stripslashes_array($_COOKIE);
-	$_REQUEST = stripslashes_array($_REQUEST);
-}
 
 // If a cookie name is not specified in config.php, we use the default (forum_cookie)
 if (empty($cookie_name))
@@ -261,10 +240,6 @@ function convert_to_utf8(&$str, $old_charset)
 
 	$save = $str;
 
-	// Replace literal entities (for non-UTF-8 compliant html_entity_encode)
-	if (version_compare(PHP_VERSION, '5.0.0', '<') && $old_charset == 'ISO-8859-1' || $old_charset == 'ISO-8859-15')
-		$str = html_entity_decode($str, ENT_QUOTES, $old_charset);
-
 	if ($old_charset != 'UTF-8' && !seems_utf8($str))
 	{
 		if (function_exists('iconv'))
@@ -275,9 +250,8 @@ function convert_to_utf8(&$str, $old_charset)
 			$str = utf8_encode($str);
 	}
 
-	// Replace literal entities (for UTF-8 compliant html_entity_encode)
-	if (version_compare(PHP_VERSION, '5.0.0', '>='))
-		$str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
+	// Replace literal entities
+    $str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
 
 	// Replace numeric entities
 	$str = preg_replace_callback('%&#([0-9]+);%', 'utf8_callback_1', $str);

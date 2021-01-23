@@ -57,14 +57,8 @@ require PUN_ROOT.'include/utf8/utf8.php';
 // Strip out "bad" UTF-8 characters
 forum_remove_bad_characters();
 
-// Reverse the effect of register_globals
-forum_unregister_globals();
-
 // The addon manager is responsible for storing the hook listeners and communicating with the addons
 $flux_addons = new flux_addon_manager();
-
-// Record the start time (will be used to calculate the generation time for the page)
-$pun_start = get_microtime();
 
 // Seed the random number generator for systems where this does not happen automatically
 mt_srand();
@@ -75,31 +69,6 @@ mt_srand();
 
 // Force POSIX locale (to prevent functions such as strtolower() from messing up UTF-8 strings)
 setlocale(LC_CTYPE, 'C');
-
-// Turn off magic_quotes_runtime
-if (get_magic_quotes_runtime())
-	set_magic_quotes_runtime(0);
-
-// Strip slashes from GET/POST/COOKIE/REQUEST/FILES (if magic_quotes_gpc is enabled)
-if (!defined('FORUM_DISABLE_STRIPSLASHES') && get_magic_quotes_gpc())
-{
-	function stripslashes_array($array)
-	{
-		return is_array($array) ? array_map('stripslashes_array', $array) : stripslashes($array);
-	}
-
-	$_GET = stripslashes_array($_GET);
-	$_POST = stripslashes_array($_POST);
-	$_COOKIE = stripslashes_array($_COOKIE);
-	$_REQUEST = stripslashes_array($_REQUEST);
-	if (is_array($_FILES))
-	{
-		// Don't strip valid slashes from tmp_name path on Windows
-		foreach ($_FILES AS $key => $value)
-			$_FILES[$key]['tmp_name'] = str_replace('\\', '\\\\', $value['tmp_name']);
-		$_FILES = stripslashes_array($_FILES);
-	}
-}
 
 // If a cookie name is not specified in config.php, we use the default (pun_cookie)
 if (empty($cookie_name))
