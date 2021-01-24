@@ -180,7 +180,7 @@ class DBLayer
 
 	function error()
 	{
-		$result['error_sql'] = @current(@end($this->saved_queries));
+		$result['error_sql'] = $this->saved_queries ? @current(@end($this->saved_queries)) : '';
 		$result['error_no'] = $this->error_no;
 		$result['error_msg'] = $this->error_msg;
 
