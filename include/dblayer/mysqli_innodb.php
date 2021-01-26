@@ -192,9 +192,11 @@ class DBLayer
 	{
 		if ($this->link_id)
 		{
-			if ($this->query_result instanceof mysqli_result)
-				@mysqli_free_result($this->query_result);
-
+			try {
+				if ($this->query_result instanceof mysqli_result) {
+					@mysqli_free_result($this->query_result);
+				}
+			} catch (Error $e){}
 			return @mysqli_close($this->link_id);
 		}
 		else
