@@ -130,6 +130,11 @@ if (isset($_GET['action']) || isset($_GET['search_id']))
 			else
 				$db->query('UPDATE '.$db->prefix.'online SET last_search='.time().' WHERE ident=\''.$db->escape(get_remote_address()).'\'' ) or error('Unable to update user', __FILE__, __LINE__, $db->error());
 
+			// Start a new transaction to unlock the above tables
+			// otherwise slow searches bring down the whole forum
+			$db->end_transaction();
+			$db->start_transaction();
+
 			switch ($sort_by)
 			{
 				case 1:
